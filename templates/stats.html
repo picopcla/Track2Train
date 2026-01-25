@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Track2Train - Statistiques</title>
+<link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    body { font-family: Arial, sans-serif; background:#f5f5f5; margin: 0; }
+    .container { max-width:800px; margin:0 auto; padding:1rem; }
+
+    /* Header */
+    .header {
+        background-color: #ef4423;
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    .header h1 {
+        color: white;
+        margin: 0;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .header img {
+        height: 40px;
+    }
+    .back-btn {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .back-btn:hover {
+        background: rgba(255,255,255,0.3);
+    }
+
+    /* Filtres */
+    .filters {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+    }
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .filter-group label {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.9rem;
+    }
+    .period-btns {
+        display: flex;
+        gap: 4px;
+    }
+    .period-btn {
+        padding: 6px 14px;
+        border: 2px solid #ef4423;
+        background: white;
+        color: #ef4423;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .period-btn:hover {
+        background: #fef2f2;
+    }
+    .period-btn.active {
+        background: #ef4423;
+        color: white;
+    }
+    .type-select {
+        padding: 6px 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    /* Cartes stats */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.8rem;
+        margin-bottom: 1rem;
+    }
+    .stat-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .stat-card .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #ef4423;
+    }
+    .stat-card .label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+
+    /* Graphiques */
+    .chart-container {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    .chart-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #374151;
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .chart-wrapper {
+        position: relative;
+        height: 250px;
+    }
+
+    /* Tableau derniers runs */
+    .runs-table-container {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow-x: auto;
+    }
+    .runs-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+    .runs-table th {
+        background: #f9fafb;
+        padding: 10px 8px;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .runs-table td {
+        padding: 8px;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .runs-table tr:hover {
+        background: #fef2f2;
+    }
+
+    /* Error */
+    .error-message {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+        .header h1 { font-size: 1.2rem; }
+        .stats-cards { grid-template-columns: repeat(2, 1fr); }
+        .chart-wrapper { height: 200px; }
+        .filters { flex-direction: column; align-items: stretch; }
+        .filter-group { justify-content: center; }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>
+            <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="Logo">
+            Statistiques
+        </h1>
+        <a href="/" class="back-btn">
+            <span>&#8592;</span> Retour
+        </a>
+    </div>
+
+    {% if error %}
+    <div class="error-message">
+        {{ error }}
+    </div>
+    {% elif stats_data %}
+
+    <!-- Filtres -->
+    <div class="filters">
+        <div class="filter-group">
+            <label>Periode:</label>
+            <div class="period-btns">
+                <button class="period-btn {% if stats_data.period == '1m' %}active{% endif %}"
+                        onclick="updateFilters('1m', '{{ stats_data.run_type_filter }}')">1 mois</button>
+                <button class="period-btn {% if stats_data.period == '6m' %}active{% endif %}"
+                        onclick="updateFilters('6m', '{{ stats_data.run_type_filter }}')">6 mois</button>
+                <button class="period-btn {% if stats_data.period == '1y' %}active{% endif %}"
+                        onclick="updateFilters('1y', '{{ stats_data.run_type_filter }}')">1 an</button>
+            </div>
+        </div>
+        <div class="filter-group">
+            <label>Type:</label>
+            <select class="type-select" onchange="updateFilters('{{ stats_data.period }}', this.value)">
+                <option value="all" {% if stats_data.run_type_filter == 'all' %}selected{% endif %}>Tous</option>
+                {% for rtype in stats_data.run_types %}
+                <option value="{{ rtype }}" {% if stats_data.run_type_filter == rtype %}selected{% endif %}>{{ rtype }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Cartes stats -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="value">{{ stats_data.total_distance }}</div>
+            <div class="label">km total</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ stats_data.total_runs }}</div>
+            <div class="label">sorties</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ stats_data.avg_weekly_distance }}</div>
+            <div class="label">km/semaine</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ stats_data.avg_pace }}</div>
+            <div class="label">allure moy.</div>
+        </div>
+    </div>
+
+    <!-- Graphique Distance -->
+    <div class="chart-container">
+        <div class="chart-title">Distance par semaine (km)</div>
+        <div class="chart-wrapper">
+            <canvas id="distanceChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Graphique Allure -->
+    <div class="chart-container">
+        <div class="chart-title">Allure moyenne par semaine</div>
+        <div class="chart-wrapper">
+            <canvas id="paceChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Graphique k et drift -->
+    <div class="chart-container">
+        <div class="chart-title">Efficacite (k) et Drift cardiaque (%)</div>
+        <div class="chart-wrapper">
+            <canvas id="efficiencyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Tableau derniers runs -->
+    <div class="runs-table-container">
+        <div class="chart-title">20 dernieres sorties</div>
+        <table class="runs-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Dist.</th>
+                    <th>Allure</th>
+                    <th>Type</th>
+                    <th>k</th>
+                    <th>Drift</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for act in stats_data.activities|reverse %}
+                <tr>
+                    <td>{{ act.date_str }}</td>
+                    <td>{{ act.distance_km|round(1) }} km</td>
+                    <td>{{ act.allure }}</td>
+                    <td>{{ act.type or '-' }}</td>
+                    <td>{{ act.k_moy|round(3) if act.k_moy else '-' }}</td>
+                    <td>{{ (act.deriv_cardio|round(1)|string + '%') if act.deriv_cardio else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="error-message">
+        Aucune donnee disponible
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function updateFilters(period, type) {
+    window.location.href = `/stats?period=${period}&type=${type}`;
+}
+
+{% if stats_data %}
+// Donnees pour les graphiques
+const labels = {{ stats_data.chart_labels | tojson }};
+const distances = {{ stats_data.chart_distances | tojson }};
+const paces = {{ stats_data.chart_paces | tojson }};
+const kValues = {{ stats_data.chart_k | tojson }};
+const driftValues = {{ stats_data.chart_drift | tojson }};
+
+// Convertir secondes en min:sec pour affichage
+function formatPace(seconds) {
+    if (!seconds) return '-:--';
+    const min = Math.floor(seconds / 60);
+    const sec = Math.round(seconds % 60);
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+// Graphique Distance
+new Chart(document.getElementById('distanceChart'), {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'km',
+            data: distances,
+            backgroundColor: 'rgba(239, 68, 35, 0.7)',
+            borderColor: '#ef4423',
+            borderWidth: 1,
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: { display: true, text: 'km' }
+            }
+        }
+    }
+});
+
+// Graphique Allure (inversé car allure basse = plus rapide)
+new Chart(document.getElementById('paceChart'), {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Allure',
+            data: paces,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: '#3b82f6'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return formatPace(context.raw);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                reverse: true,  // Allure basse = mieux, donc inversé
+                title: { display: true, text: 'min/km' },
+                ticks: {
+                    callback: function(value) {
+                        return formatPace(value);
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Graphique Efficacite (k et drift)
+new Chart(document.getElementById('efficiencyChart'), {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: 'k (efficacite)',
+                data: kValues,
+                borderColor: '#10b981',
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: '#10b981',
+                yAxisID: 'y'
+            },
+            {
+                label: 'Drift %',
+                data: driftValues,
+                borderColor: '#f59e0b',
+                backgroundColor: 'transparent',
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: '#f59e0b',
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: { usePointStyle: true }
+            }
+        },
+        scales: {
+            y: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'k' },
+                suggestedMin: 0.4,
+                suggestedMax: 0.7
+            },
+            y1: {
+                type: 'linear',
+                position: 'right',
+                title: { display: true, text: 'Drift %' },
+                suggestedMin: 0,
+                suggestedMax: 15,
+                grid: { drawOnChartArea: false }
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+
+</body>
+</html>

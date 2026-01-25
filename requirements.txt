@@ -1,0 +1,16 @@
+flask
+requests==2.31.0
+google-api-python-client==2.102.0
+google-auth==2.22.0
+google-auth-httplib2==0.1.0
+google-auth-oauthlib==1.0.0
+gunicorn
+numpy
+openai
+scikit-learn
+matplotlib
+python-dotenv
+xgboost
+scipy
+pandas
+google-genai

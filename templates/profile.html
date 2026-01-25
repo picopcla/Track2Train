@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil - Track2Train</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="date"],
+        input[type="number"],
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="date"]:focus,
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+        }
+
+        table th,
+        table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 1.25rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .form-section h2 {
+            color: #667eea;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .shoe-info {
+            background: #fff3cd;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border-left: 3px solid #ffc107;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+
+        .info-icon {
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .info-icon:hover {
+            transform: scale(1.2);
+            background: #5568d3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .formula-box {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .method-explanation {
+            background: #e8f4f8;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Retour au dashboard</a>
+        <h1>👤 Mon Profil</h1>
+
+        <form method="POST">
+            <!-- Section informations de base -->
+            <div class="form-section">
+                <h2>📋 Informations de base</h2>
+
+                <label>🎂 Date de naissance</label>
+                <input type="date" name="birth_date" value="{{ profile.birth_date or '' }}">
+
+                <label style="margin-top: 1rem;">⚖️ Poids (kg)</label>
+                <input type="number" name="weight" step="0.1" value="{{ profile.weight or '' }}" placeholder="Ex: 70.5">
+
+                <label style="margin-top: 1rem;">💓 Fréquence Cardiaque au Repos (bpm)</label>
+                <input type="number" name="hr_rest" min="30" max="100" value="{{ profile.hr_rest or '' }}" placeholder="Ex: 59">
+
+                <label style="margin-top: 1rem;">❤️ Fréquence Cardiaque Maximale (bpm)</label>
+                <input type="number" name="hr_max" min="120" max="220" value="{{ profile.hr_max or '' }}" placeholder="Ex: 170">
+
+                <div class="shoe-info" style="margin-top: 0.5rem;">
+                    ℹ️ <strong>Info:</strong> Ces valeurs sont utilisées pour calculer vos zones cardiaques avec la formule de Karvonen.
+                    Si vous ne les connaissez pas, laissez vide (valeurs par défaut : FC repos = 59 bpm, FC max = 170 bpm).
+                </div>
+            </div>
+
+            <!-- Section objectifs -->
+            <div class="form-section">
+                <h2>🎯 Objectifs</h2>
+
+                <label>Objectif global</label>
+                <textarea name="global_objective" placeholder="Ex: Améliorer mon endurance, courir un semi-marathon...">{{ profile.global_objective or '' }}</textarea>
+
+                <label style="margin-top: 1rem;">Objectif particulier</label>
+                <textarea name="particular_objective" placeholder="Ex: Réduire mon temps sur 10km de 45min à 42min...">{{ profile.particular_objective or '' }}</textarea>
+            </div>
+
+            <!-- Section objectifs personnalisés (metrics) -->
+            {% if personalized_targets %}
+            <div class="form-section">
+                <h2>📊 Objectifs Personnalisés
+                    <span class="info-icon" onclick="openModal()" title="Comment sont calculés ces objectifs ?">ℹ️</span>
+                </h2>
+
+                <table>
+                    <tr>
+                        <th>Type de séance</th>
+                        <th>Efficacité k (objectif)</th>
+                        <th>Dérive cardiaque (objectif)</th>
+                        <th>Données utilisées</th>
+                    </tr>
+                    {% for session_type in ['endurance', 'tempo', 'fractionné'] %}
+                    {% if session_type in personalized_targets %}
+                    <tr>
+                        <td style="font-weight: 600; text-transform: capitalize;">{{ session_type }}</td>
+                        <td>{{ personalized_targets[session_type].k_target }}</td>
+                        <td>{{ personalized_targets[session_type].drift_target }}</td>
+                        <td>{{ personalized_targets[session_type].sample_size }} runs</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </table>
+
+                <div class="shoe-info" style="margin-top: 1rem;">
+                    ℹ️ <strong>Info:</strong> Ces objectifs sont calculés automatiquement en fonction de ton profil (âge, poids)
+                    et de tes performances historiques. Clique sur l'icône ℹ️ pour en savoir plus.
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Section chaussures -->
+            <div class="form-section">
+                <h2>👟 Chaussures de course</h2>
+
+                <label>Date d'achat des chaussures actuelles</label>
+                <input type="date" name="shoes_purchase_date" value="{{ profile.shoes_purchase_date or '' }}">
+
+                <div class="shoe-info">
+                    ℹ️ <strong>Info:</strong> Les chaussures de running doivent être changées tous les 600-800 km pour prévenir les blessures.
+                    La date d'achat permet de suivre l'usure de vos chaussures.
+                </div>
+            </div>
+
+            <!-- Section contraintes santé -->
+            <div class="form-section">
+                <h2>⚕️ Contraintes santé</h2>
+
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="health_cardiac" name="health_constraints[]" value="cardiac_monitoring"
+                               {% if 'cardiac_monitoring' in profile.health_constraints %}checked{% endif %}>
+                        <label for="health_cardiac">Surveillance cardiaque (50+ ans)</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="health_knee" name="health_constraints[]" value="knee_pain"
+                               {% if 'knee_pain' in profile.health_constraints %}checked{% endif %}>
+                        <label for="health_knee">Douleurs genoux</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="health_ankle" name="health_constraints[]" value="ankle_issues"
+                               {% if 'ankle_issues' in profile.health_constraints %}checked{% endif %}>
+                        <label for="health_ankle">Problèmes chevilles</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="health_none" name="health_constraints[]" value="none"
+                               {% if 'none' in profile.health_constraints %}checked{% endif %}>
+                        <label for="health_none">Aucune contrainte</label>
+                    </div>
+                </div>
+
+                <input type="hidden" name="enjoys_sweating" value="false">
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+                    <input type="checkbox" name="enjoys_sweating" value="true"
+                           {% if profile.preferences.enjoys_sweating %}checked{% endif %}
+                           style="width: auto;">
+                    💦 J'aime transpirer pendant mes runs
+                </label>
+            </div>
+
+            <!-- Section événements -->
+            <div class="form-section">
+                <h2>📅 Événements / Courses planifiées</h2>
+
+                <table id="eventsTable">
+                    <tr>
+                        <th>Date</th>
+                        <th>Événement</th>
+                    </tr>
+                    {% for event in profile.events %}
+                    <tr>
+                        <td><input type="date" name="event_date[]" value="{{ event.date }}"></td>
+                        <td><input type="text" name="event_name[]" value="{{ event.name }}"></td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td><input type="date" name="event_date[]"></td>
+                        <td><input type="text" name="event_name[]"></td>
+                    </tr>
+                </table>
+            </div>
+
+            <button type="submit" class="btn">💾 Sauvegarder le profil</button>
+        </form>
+    </div>
+
+    <!-- Modal d'explication des objectifs -->
+    <div id="targetsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 Comment sont calculés vos objectifs personnalisés ?</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+
+            <div style="line-height: 1.8;">
+                <h3 style="color: #667eea; margin-top: 1.5rem;">🔬 Approche Hybride</h3>
+                <div class="method-explanation">
+                    <strong>Vos objectifs sont calculés en combinant :</strong>
+                    <ul style="margin: 0.5rem 0 0 1.5rem;">
+                        <li><strong>60%</strong> de vos performances historiques (P75 de vos meilleurs runs par type)</li>
+                        <li><strong>40%</strong> de formules scientifiques basées sur votre profil</li>
+                    </ul>
+                    <p style="margin-top: 0.5rem; font-style: italic;">
+                        Cette combinaison permet d'avoir des objectifs réalistes et personnalisés, ancrés dans vos capacités réelles.
+                    </p>
+                </div>
+
+                <h3 style="color: #667eea; margin-top: 1.5rem;">📐 Formules Scientifiques Utilisées</h3>
+
+                <h4 style="margin-top: 1rem; color: #555;">1️⃣ Fréquence Cardiaque Maximale (FC max)</h4>
+                <div class="formula-box">
+                    FC max = 208 - (0.7 × âge)
+                </div>
+                <p style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">
+                    <em>Formule de Tanaka : plus précise que la formule classique (220-âge) pour les personnes de plus de 40 ans.</em>
+                </p>
+
+                <h4 style="margin-top: 1rem; color: #555;">2️⃣ Dérive Cardiaque Théorique</h4>
+                <div class="formula-box">
+                    drift_rate = -0.0514 + (0.0240 × %FC max) - (0.0172 × âge)
+                </div>
+                <p style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">
+                    <em>Basée sur l'âge et l'intensité de l'effort. Plus l'effort est intense, plus la dérive est naturellement élevée.</em>
+                </p>
+
+                <h4 style="margin-top: 1rem; color: #555;">3️⃣ Efficacité Cardiaque (k) Théorique</h4>
+                <div class="formula-box">
+                    k théorique = 2.0 - (%FC max / 100) × 1.5
+                </div>
+                <p style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">
+                    <em>L'efficacité diminue naturellement avec l'intensité de l'effort. Un k élevé à faible intensité est excellent.</em>
+                </p>
+
+                <h3 style="color: #667eea; margin-top: 1.5rem;">🎯 Calcul Final par Type de Séance</h3>
+                <div class="method-explanation">
+                    <p><strong>Pour chaque type de séance (endurance, tempo, fractionné) :</strong></p>
+                    <div class="formula-box" style="margin-top: 0.5rem;">
+                        Objectif = (0.6 × P75 historique) + (0.4 × Valeur théorique)
+                    </div>
+                    <ul style="margin: 0.5rem 0 0 1.5rem;">
+                        <li><strong>P75 historique</strong> = 75e percentile de vos meilleures performances (top 25%)</li>
+                        <li><strong>Valeur théorique</strong> = Calculée selon les formules scientifiques ci-dessus</li>
+                    </ul>
+                </div>
+
+                <h3 style="color: #667eea; margin-top: 1.5rem;">📈 Évolution des Objectifs</h3>
+                <p style="color: #666;">
+                    Vos objectifs évoluent automatiquement au fur et à mesure de vos entraînements.
+                    Plus vous courez, plus vos performances historiques s'améliorent, et plus vos objectifs s'adaptent à votre progression réelle.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('targetsModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('targetsModal').style.display = 'none';
+        }
+
+        // Fermer le modal si on clique en dehors
+        window.onclick = function(event) {
+            const modal = document.getElementById('targetsModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        function addRow() {
+            let table = document.getElementById("eventsTable");
+            let row = table.insertRow(-1);
+            row.innerHTML = `<td><input type="date" name="event_date[]"></td>
+                             <td><input type="text" name="event_name[]"></td>`;
+        }
+
+        window.onload = () => {
+            const birthInput = document.querySelector('input[name="birth_date"]');
+            if (birthInput) updateAge(birthInput.value);
+            const intensityInput = document.querySelector('input[name="intensity_tolerance"]');
+            if (intensityInput) updateIntensityValue(intensityInput.value);
+        };
+    </script>
+</body>
+</html>
