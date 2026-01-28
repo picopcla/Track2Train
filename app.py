@@ -10,40 +10,14 @@ from google import genai
 from dotenv import load_dotenv
 
 
-# === Début bloc ENV universel (à coller après les imports) ===
-
-# Dossier sécurité (Windows: C:\Track2TrainSecurity ; Linux: /opt/app/Track2TrainSecurity)
-SEC_DIR = Path(
-    os.getenv("STRAVA_SECURITY_DIR")
-    or (r"C:\Track2TrainSecurity" if os.name == "nt" else "/opt/app/Track2TrainSecurity")
-)
-ENV_FILE = Path(os.getenv("STRAVA_SECURITY_PATH", SEC_DIR / "main.env"))
-
-
-# 1) Charger .env du projet s'il existe
+# === Chargement des variables d'environnement ===
+# Charge le .env du projet (fonctionne sur Windows, Linux, Mac)
 load_dotenv()
 
-# 2) Charger main.env du dossier sécurité (override=True pour écraser si besoin)
-if ENV_FILE.exists():
-    load_dotenv(ENV_FILE, override=True)
-    print(f"✅ main.env chargé depuis {ENV_FILE}")
-else:
-    print(f"⚠️ main.env introuvable : {ENV_FILE}")
-
-# 3) Si le chemin Google n'est pas défini, essayer services.json par défaut
-if not os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
-    cred_path = SEC_DIR / "services.json"
-    if cred_path.exists():
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(cred_path)
-        print(f"✅ services.json détecté : {cred_path}")
-    else:
-        print(f"⚠️ services.json manquant : {cred_path}")
-
-# 4) Garde-fous (on ne va pas plus loin si une clé vitale manque)
-for name in ["OPENAI_API_KEY", "FOLDER_ID", "GOOGLE_APPLICATION_CREDENTIALS"]:
-    if not os.getenv(name):
-        raise RuntimeError(f"Variable requise manquante: {name}")
-# === Fin bloc ENV universel ===
+# Vérification de la clé Gemini (seule variable obligatoire)
+if not os.getenv("GOOGLE_GEMINI_API_KEY"):
+    print("⚠️ GOOGLE_GEMINI_API_KEY non définie - le coaching IA sera désactivé")
+# === Fin chargement ENV ===
 
 
 # --- Helpers Drive (après bootstrap ENV !) ---
@@ -459,7 +433,7 @@ gemini_client = None
 if google_api_key:
     try:
         gemini_client = genai.Client(api_key=google_api_key)
-        print("✅ Google Gemini client initialisé (gemini-2.0-flash-exp)")
+        print("✅ Google Gemini client initialisé (gemini-2.0-flash)")
     except Exception as e:
         print(f"⚠️ Erreur init Gemini: {e}")
 else:
@@ -508,7 +482,7 @@ def generate_ai_coaching(prompt_content, max_tokens=500, temperature=0.3):
 
     try:
         response = gemini_client.models.generate_content(
-            model='gemini-2.0-flash-exp',
+            model='gemini-2.0-flash',
             contents=prompt_content,
             config={
                 'max_output_tokens': max_tokens,
@@ -1251,7 +1225,7 @@ Numéro de semaine à afficher: {next_week}
         max_tokens = 3000 if is_last_run_of_week else 1200
 
         response = gemini_client.models.generate_content(
-            model='gemini-2.0-flash-exp',
+            model='gemini-2.0-flash',
             contents=final_prompt,
             config={
                 'max_output_tokens': max_tokens,

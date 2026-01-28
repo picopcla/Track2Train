@@ -10,6 +10,7 @@ env/
 # Data & Config
 *.json
 !requirements.txt
+outputs/
 VERSION_backup_*
 index_backup_*
 standardized_repair_*_final.py
