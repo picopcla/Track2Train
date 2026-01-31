@@ -1,0 +1,17 @@
+[Unit]
+Description=Track2Train Staging (Gunicorn)
+After=network.target
+
+[Service]
+User=stravacoach
+Group=stravacoach
+WorkingDirectory=/opt/app/Track2Train-staging
+Environment="PATH=/opt/app/Track2Train-staging/.venv/bin"
+EnvironmentFile=/opt/app/Track2Train-staging/.env
+EnvironmentFile=-/opt/app/Track2TrainSecurity-staging/main.env
+ExecStart=/opt/app/Track2Train-staging/.venv/bin/gunicorn --workers 3 --bind 100.107.79.5:5002 --timeout 180 --graceful-timeout 180 app:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

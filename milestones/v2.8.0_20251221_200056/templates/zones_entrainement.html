@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zones d'Entraînement - Track2Train</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .nav {
+            margin-top: 20px;
+        }
+
+        .nav a {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #764ba2;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 24px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .zone-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+
+        .zone-card.recuperation {
+            border-left-color: #28a745;
+        }
+
+        .zone-card.endurance {
+            border-left-color: #17a2b8;
+        }
+
+        .zone-card.longrun {
+            border-left-color: #ffc107;
+        }
+
+        .zone-card.tempo {
+            border-left-color: #fd7e14;
+        }
+
+        .zone-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .zone-detail {
+            margin: 8px 0;
+            color: #555;
+        }
+
+        .zone-detail strong {
+            color: #333;
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .formula {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            border-radius: 5px;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .info-box.warning {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .info-box.success {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .legend {
+            margin: 20px 0;
+        }
+
+        .legend-item {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        ul {
+            margin: 10px 0 10px 20px;
+        }
+
+        li {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header, .content-card {
+                padding: 20px;
+            }
+
+            table {
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Zones d'Entraînement</h1>
+            <p class="subtitle">Guide complet des zones FC et allures cibles par type de run</p>
+            <div class="nav">
+                <a href="/">← Retour au Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Section: Définition des références -->
+        <div class="content-card">
+            <h2>🎯 Références de Calcul</h2>
+
+            <h3>hr_ref (Fréquence Cardiaque de Référence)</h3>
+            <div class="formula">
+                hr_ref = Moyenne des 10 derniers runs ENDURANCE
+            </div>
+            <p>Valeur actuelle estimée: <strong>144 bpm</strong></p>
+
+            <h3>pace_ref (Allure de Référence)</h3>
+            <div class="formula">
+                pace_ref = Moyenne des 10 derniers runs ENDURANCE
+            </div>
+            <p>Valeur actuelle estimée: <strong>5:22/km</strong> (5.37 min/km)</p>
+
+            <h3>FCmax (Fréquence Cardiaque Maximale)</h3>
+            <div class="formula">
+                FCmax = 172 bpm (basé sur runs fractionnés)
+            </div>
+        </div>
+
+        <!-- Section: Zones par type de run -->
+        <div class="content-card">
+            <h2>🏃 Zones par Type de Run</h2>
+
+            <!-- Récupération -->
+            <div class="zone-card recuperation">
+                <div class="zone-title">💚 A) RUN RÉCUPÉRATION</div>
+                <div class="zone-detail">
+                    <strong>FC cible:</strong>
+                    <span class="formula" style="display: inline; background: transparent; border: none; padding: 0;">
+                        min(hr_ref − 20 bpm, 75% FCmax)
+                    </span>
+                </div>
+                <div class="zone-detail">
+                    <strong>Résultat:</strong> min(124, 129) = <strong>124-129 bpm</strong>
+                </div>
+                <div class="zone-detail">
+                    <strong>Allure cible:</strong> pace_ref + 45 à 75 sec/km = <strong>6:07 - 6:37/km</strong>
+                </div>
+                <div class="zone-detail">
+                    <strong>Objectif:</strong> Récupération active, régénération musculaire
+                </div>
+                <div class="zone-detail">
+                    <strong>Ressenti:</strong> Très facile, conversation fluide
+                </div>
+            </div>
+
+            <!-- Endurance -->
+            <div class="zone-card endurance">
+                <div class="zone-title">💙 B) RUN ENDURANCE (EF / Z2)</div>
+                <div class="zone-detail">
+                    <strong>FC cible:</strong> 78-83% FCmax OU hr_ref ± 5 bpm
+                </div>
+                <div class="zone-detail">
+                    <strong>Résultat:</strong> <strong>134-143 bpm</strong> (78-83% FCmax) ou 139-149 (hr_ref±5)
+                </div>
+                <div class="zone-detail">
+                    <strong>Allure cible:</strong> pace_ref + 15 à 30 sec/km = <strong>5:37 - 6:07/km</strong>
+                </div>
+                <div class="zone-detail">
+                    <strong>Objectif:</strong> Développer endurance de base, capacité aérobie
+                </div>
+                <div class="zone-detail">
+                    <strong>Ressenti:</strong> Confortable, respiration contrôlée
+                </div>
+            </div>
+
+            <!-- Long Run -->
+            <div class="zone-card longrun">
+                <div class="zone-title">🧡 C) LONG RUN (Sortie Longue)</div>
+                <div class="zone-detail">
+                    <strong>FC départ:</strong> Identique à Endurance = <strong>134-143 bpm</strong>
+                </div>
+                <div class="zone-detail">
+                    <strong>Allure départ:</strong> Identique à Endurance = <strong>5:37 - 6:07/km</strong>
+                </div>
+                <div class="zone-detail">
+                    <strong>Tolérance dérive:</strong> <strong>≤ 6-7%</strong> ⚠️ (objectif ambitieux)
+                </div>
+                <div class="zone-detail">
+                    <strong>Objectif:</strong> Endurance longue durée, gestion de l'effort
+                </div>
+
+                <div class="info-box warning" style="margin-top: 15px;">
+                    <strong>⚠️ Attention:</strong> Votre dérive actuelle sur long runs = 13.8% (moyenne)<br>
+                    L'objectif 6-7% est très ambitieux. Progresser graduellement:
+                    <ul style="margin-top: 10px;">
+                        <li>Court terme: Viser 10-12%</li>
+                        <li>Moyen terme (3-6 mois): Viser 8-10%</li>
+                        <li>Long terme: Viser 6-7%</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tempo (suggéré) -->
+            <div class="zone-card tempo">
+                <div class="zone-title">🔥 D) TEMPO / SEUIL (Suggéré)</div>
+                <div class="zone-detail">
+                    <strong>FC cible:</strong> 85-90% FCmax = <strong>146-155 bpm</strong>
+                </div>
+                <div class="zone-detail">
+                    <strong>Allure cible:</strong> pace_ref - 15 à 30 sec/km = <strong>4:52 - 5:07/km</strong>
+                </div>
+                <div class="zone-detail">
+                    <strong>Dérive max:</strong> ≤ 10-12% (effort intense)
+                </div>
+                <div class="zone-detail">
+                    <strong>Objectif:</strong> Améliorer seuil anaérobie, vitesse soutenue
+                </div>
+                <div class="zone-detail">
+                    <strong>Ressenti:</strong> Difficile mais soutenable 20-40 min
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau récapitulatif -->
+        <div class="content-card">
+            <h2>📊 Tableau Récapitulatif</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type Run</th>
+                        <th>FC (bpm)</th>
+                        <th>% FCmax</th>
+                        <th>Allure cible</th>
+                        <th>Dérive max</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Récupération</strong></td>
+                        <td>124-129</td>
+                        <td>72-75%</td>
+                        <td>6:07-6:37/km</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Endurance</strong></td>
+                        <td>134-143</td>
+                        <td>78-83%</td>
+                        <td>5:37-6:07/km</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Long Run</strong></td>
+                        <td>134-143 (début)</td>
+                        <td>78-83%</td>
+                        <td>5:37-6:07/km (début)</td>
+                        <td>≤ 6-7%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tempo/Seuil</strong></td>
+                        <td>146-155</td>
+                        <td>85-90%</td>
+                        <td>4:52-5:07/km</td>
+                        <td>≤ 10-12%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section: Dérive Cardiaque -->
+        <div class="content-card">
+            <h2>📈 Dérive Cardiaque</h2>
+
+            <h3>Définition</h3>
+            <p>La dérive cardiaque mesure l'augmentation progressive de la FC pour une même intensité d'effort.</p>
+
+            <div class="formula">
+                Dérive (%) = ((R₂ - R₁) / R₁) × 100<br>
+                où R = FC / Vitesse
+            </div>
+
+            <h3>Interprétation</h3>
+            <ul>
+                <li><strong>0-5%</strong>: Excellente stabilité cardio-mécanique ✅</li>
+                <li><strong>5-10%</strong>: Bon contrôle de l'effort 🎯</li>
+                <li><strong>10-15%</strong>: Dérive modérée, acceptable sur long run ⚠️</li>
+                <li><strong>&gt;15%</strong>: Dérive élevée, fatigue importante 🔴</li>
+            </ul>
+
+            <h3>Vos Moyennes Actuelles</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type Run</th>
+                        <th>Dérive Moyenne</th>
+                        <th>Objectif P40</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Récupération</td>
+                        <td>6.7%</td>
+                        <td>6.6%</td>
+                        <td>🎯 Dans la cible</td>
+                    </tr>
+                    <tr>
+                        <td>Endurance</td>
+                        <td>6.7%</td>
+                        <td>8.4%</td>
+                        <td>✅ Excellent</td>
+                    </tr>
+                    <tr>
+                        <td>Tempo Rapide</td>
+                        <td>9.0%</td>
+                        <td>9.2%</td>
+                        <td>🎯 Dans la cible</td>
+                    </tr>
+                    <tr>
+                        <td>Long Run</td>
+                        <td>13.8%</td>
+                        <td>14.1%</td>
+                        <td>🎯 Dans la cible</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box success">
+                <strong>✅ Bonne nouvelle!</strong> Vos dérives actuelles sont cohérentes avec vos performances.
+                Pour atteindre 6-7% sur long run, progresser graduellement sur 3-6 mois.
+            </div>
+        </div>
+
+        <!-- Section: Facteurs influençant -->
+        <div class="content-card">
+            <h2>🌡️ Facteurs Influençant les Zones</h2>
+
+            <h3>Ajustements Recommandés</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Facteur</th>
+                        <th>Impact</th>
+                        <th>Ajustement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Température &gt; 25°C</td>
+                        <td>FC ↑, Dérive ↑</td>
+                        <td>Allure -10 à -20 sec/km<br>Dérive tolérance +2%</td>
+                    </tr>
+                    <tr>
+                        <td>Humidité &gt; 70%</td>
+                        <td>FC ↑, Effort ↑</td>
+                        <td>Allure -10 sec/km<br>Dérive tolérance +1%</td>
+                    </tr>
+                    <tr>
+                        <td>Dénivelé positif &gt; 200m</td>
+                        <td>FC ↑, Allure ↓</td>
+                        <td>Allure -15 à -30 sec/km<br>Dérive tolérance +1.5%</td>
+                    </tr>
+                    <tr>
+                        <td>Altitude &gt; 1500m</td>
+                        <td>FC ↑, VO2max ↓</td>
+                        <td>Allure -20 à -40 sec/km</td>
+                    </tr>
+                    <tr>
+                        <td>Fatigue/Manque sommeil</td>
+                        <td>FC ↑, Performance ↓</td>
+                        <td>Passer au run récupération</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section: Conseils pratiques -->
+        <div class="content-card">
+            <h2>💡 Conseils Pratiques</h2>
+
+            <h3>Pendant le Run</h3>
+            <ul>
+                <li>✅ Surveiller FC plutôt qu'allure (surtout débutants)</li>
+                <li>✅ Si FC dépasse zone cible: RALENTIR immédiatement</li>
+                <li>✅ Hydratation régulière (tous les 15-20 min sur long run)</li>
+                <li>✅ Accepter dérive progressive sur long run (normal!)</li>
+                <li>⚠️ Si dérive &gt; tolérance: raccourcir ou ralentir</li>
+            </ul>
+
+            <h3>Planification Hebdomadaire</h3>
+            <ul>
+                <li>📅 <strong>Récupération</strong>: Après run intense ou long run</li>
+                <li>📅 <strong>Endurance</strong>: 2-3x par semaine (base)</li>
+                <li>📅 <strong>Long Run</strong>: 1x par semaine (week-end)</li>
+                <li>📅 <strong>Tempo</strong>: 1x par semaine max</li>
+            </ul>
+
+            <h3>Progression</h3>
+            <div class="info-box">
+                <strong>Règle 10%:</strong> Augmenter volume total de max 10% par semaine<br>
+                <strong>Semaine récup:</strong> Toutes les 3-4 semaines, réduire volume de 30-40%<br>
+                <strong>Test zones:</strong> Réévaluer hr_ref et pace_ref tous les 2-3 mois
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="content-card">
+            <h2>📚 Documentation Complète</h2>
+            <p>Pour plus de détails sur le calcul de la dérive cardiaque, consultez:</p>
+            <ul>
+                <li>📄 <code>DOCUMENTATION_DERIVE_CARDIAQUE.md</code></li>
+                <li>🔧 Scripts: <code>recalculate_cardiac_drift.py</code>, <code>update_drift_targets.py</code></li>
+            </ul>
+
+            <p style="margin-top: 20px; color: #666; font-size: 14px;">
+                <strong>Dernière mise à jour:</strong> 20 décembre 2025<br>
+                <strong>Version:</strong> Track2Train 2.0
+            </p>
+        </div>
+    </div>
+</body>
+</html>

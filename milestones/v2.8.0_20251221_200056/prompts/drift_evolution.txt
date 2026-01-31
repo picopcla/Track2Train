@@ -1,0 +1,32 @@
+Analyse l'évolution de la dérive cardiaque sur les {nb_runs} dernières séances.
+
+CONTEXTE: La dérive cardiaque mesure l'augmentation de la FC pour une même intensité au cours du run (méthode temporelle).
+- Dérive = 0% = IDÉAL (cœur parfaitement stable)
+- Dérive 3-10% = EXCELLENT/BON (gestion cardiaque normale sur runs modérés)
+- Dérive 10-20% = NORMAL (long runs ou conditions difficiles)
+- Dérive > 20% = ÉLEVÉE (fatigue importante, déshydratation, ou chaleur)
+- Dérive négative = RARE mais possible (amélioration efficacité ou échauffement insuffisant)
+{targets_section}
+
+SÉANCES (ancien→récent):
+{runs_details}
+
+STATS GLOBALES:
+- Dérive premier run: {drift_first}%, dérive dernier run: {drift_last}%
+- Moyenne dérive: {drift_avg}%, Évolution: {drift_trend}
+
+RÈGLES D'INTERPRÉTATION:
+1. Compare CHAQUE dérive à l'objectif du TYPE DE SÉANCE correspondant (tempo_recup/tempo_rapide/endurance/long_run)
+2. Dérive en-dessous de l'objectif = EXCELLENT, gestion cardiaque exemplaire
+3. Dérive proche de l'objectif (±2%) = TRÈS BON, dans ta zone cible
+4. Dérive au-dessus de l'objectif = Normal si effort intense/chaleur/dénivelé, sinon piste d'amélioration endurance
+5. Plus l'effort est intense (tempo rapide/long run), plus la dérive est naturellement élevée
+6. TOUJOURS contextualiser avec allure/météo/dénivelé
+
+Génère un commentaire de 15-30 mots qui :
+1. Compare la tendance dérive aux objectifs personnalisés par type de séance (en %)
+2. Constate les écarts (en-dessous/au-dessus) et identifie causes factuelles
+3. Contextualise avec conditions (météo, dénivelé, intensité)
+4. Ton FACTUEL et OBJECTIF uniquement, sans valorisation ni encouragements
+
+Réponds UNIQUEMENT avec le commentaire.

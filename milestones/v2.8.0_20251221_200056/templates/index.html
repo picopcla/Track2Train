@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Track2Train - Dashboard</title>
+<link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}" type="image/png">
+<style>
+    body { font-family: Arial, sans-serif; background:#f5f5f5; }
+    .container { max-width:700px; margin:2rem auto; background:white; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); padding:2rem; }
+
+    /* Header corrigé pour éviter superposition */
+    .header {
+        background-color: #ef4423;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-align: left;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem 1rem;
+    }
+    .header-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        flex: 1 1 60%;
+        min-width: 180px;
+    }
+    .header-left h1 {
+        color: white;
+        margin: 0;
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .header-left img {
+        height: 50px;
+    }
+    .small-two {
+        font-size: 0.6em;
+        line-height: 1;
+        vertical-align: baseline;
+        margin: 0 -0.15em;
+        display: inline-block;
+    }
+    .header-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem 1.5rem;
+        font-weight: bold;
+        color: white;
+        font-size: 0.9rem;
+    }
+    .header-info p {
+        margin: 0;
+        white-space: nowrap;
+    }
+    .header-right {
+        color: white;
+        font-size: 1.1rem;
+        font-weight: bold;
+        flex: 1 1 30%;
+        min-width: 120px;
+        text-align: right;
+        white-space: nowrap;
+    }
+    /* Ajout style pour l’emoji météo */
+    .header-right span.weather-emoji {
+        font-size: 1.8rem;
+        display: inline-block;
+        margin-top: 0.2rem;
+    }
+    .powered {
+        flex-basis: 100%;
+        font-size: 0.7rem;
+        color: white;
+        text-align: center;
+        margin-top: 0.3rem;
+    }
+
+    /* Responsive simplifié */
+    @media (max-width: 600px) {
+        .header-left, .header-right {
+            flex: 1 1 100%;
+            text-align: center;
+        }
+        .header-right {
+            margin-top: 0.3rem;
+        }
+        .header-info {
+            justify-content: center;
+        }
+    }
+
+    /* Le reste de ton CSS existant */
+    .type-coaching {
+        color: white; 
+        font-weight: bold; 
+        font-size: 1rem; 
+        margin: 0.7rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .type-coaching .date {
+        font-weight: normal;
+        font-size: 0.9rem;
+    }
+    .objectives, .short-term-comment { background-color: #f47a50; color: white; font-weight: bold; font-size: 0.9rem; text-align: center; border-radius: 6px; padding: 0.3rem; margin: 0.5rem 0; }
+    .short-term-comment { background-color: #eee; color: #333; font-style: italic; }
+    .next-runs table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .next-runs th, .next-runs td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .next-runs th { background: #f47a50; color: white; }
+    .sub-header { background-color: #f47a50; padding: 0.2rem 0.8rem; border-radius: 8px; text-align: center; margin: 2rem auto; }
+    .sub-header h2 { color: white; margin: 0; font-size: 1.2rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem 2rem; margin-top: 1rem; }
+    .stats-grid div { text-align: left; }
+    .stats-grid .value { font-size: 1rem; font-weight: bold; }
+    .stats-grid small { display: block; font-size: 0.7rem; color: #666; }
+    .chart-container { width:100%; height:400px; margin-top:2rem; }
+    .btn { display:block; width:100%; text-align:center; background:#007BFF; color:white; padding:10px; border-radius:5px; text-decoration:none; margin-top:1rem; }
+
+    /* CARROUSEL PRINCIPAL */
+    .carousel-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        background: #fff;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+    #mainCarouselSlides {
+        display: flex;
+        transition: transform 0.3s ease-in-out;
+        will-change: transform;
+    }
+    .carousel-slide {
+        min-width: 100%;
+        box-sizing: border-box;
+        padding: 0;
+        user-select: none;
+    }
+	.carousel-arrows {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 0.5rem 0 1rem 0; /* espace entre header et contenu */
+}
+
+	.carousel-arrows button {
+		background: #ef4423; /* fond orange */
+		border: none;
+		color: white; /* flèche blanche */
+		font-size: 2rem;
+		border-radius: 50%;
+		width: 50px;
+		height: 50px;
+		cursor: pointer;
+		transition: transform 0.2s;
+	}
+
+	.carousel-arrows button:hover {
+		transform: scale(1.2);
+	}
+
+	/* Mobile: Sparklines en colonne verticale */
+	@media (max-width: 600px) {
+		.stats-grid {
+			grid-template-columns: 1fr !important;
+		}
+	}
+
+	/* Conteneur scrollable pour analyse IA */
+	.ai-comment-scroll {
+		max-height: 500px;
+		overflow-y: auto;
+		overflow-x: auto;
+		margin: 0.75rem 0;
+		padding: 0.5rem;
+		line-height: 1.7;
+		border: 2px solid #e5e7eb;
+		border-radius: 6px;
+		background: white;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	/* Style scrollbar pour meilleure visibilité */
+	.ai-comment-scroll::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	.ai-comment-scroll::-webkit-scrollbar-track {
+		background: #f1f1f1;
+		border-radius: 6px;
+	}
+
+	.ai-comment-scroll::-webkit-scrollbar-thumb {
+		background: #888;
+		border-radius: 6px;
+	}
+
+	.ai-comment-scroll::-webkit-scrollbar-thumb:hover {
+		background: #555;
+	}
+
+</style>
+</head>
+<body>
+<div class="container">
+
+    <!-- CARROUSEL PRINCIPAL -->
+    {% if activities_for_carousel %}
+	<div class="carousel-container" aria-label="Carrousel des activités">
+
+		<!-- ✅ Flèches sous le header -->
+		<div class="carousel-arrows">
+			<button id="mainPrevBtn" aria-label="Activité précédente">‹</button>
+			<button id="mainNextBtn" aria-label="Activité suivante">›</button>
+		</div>
+
+		<div id="mainCarouselSlides">
+			{% for act in activities_for_carousel %}
+            <div class="carousel-slide" role="group" aria-roledescription="slide" aria-label="Activité {{ loop.index }} sur {{ activities_for_carousel|length }}">
+                <div class="header">
+                    <div class="header-left">
+                        <h1>
+                            <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="Track2Train">
+                            Track<span class="small-two">2</span>Train
+                        </h1>
+			<div class="header-info">
+				<p>
+					Type : {{ act.type_sortie }}
+					{% if act.is_fractionne %}
+						— <span style="color:yellow;">Fractionné ✅ ({{ (act.fractionne_prob * 100)|round(1) }}%)</span>
+					{% else %}
+						— <span style="color:lightgray;">Non fractionné</span>
+					{% endif %}
+				</p>
+				<p>Date : {{ act.date }}</p>
+			</div>
+                    </div>
+                    <div class="header-right">
+                        {% if act.temperature is not none %}
+                            Température : {{ act.temperature }}°C
+                            <br />
+                            <span class="weather-emoji">{{ act.weather_emoji }}</span>
+                        {% else %}
+                            Température : N/A
+                        {% endif %}
+
+                        <!-- 👟 Pastille kilométrage chaussures -->
+                        {% if shoe_status != 'unknown' %}
+                        <br />
+                        <span style="
+                            display: inline-block;
+                            margin-top: 0.5rem;
+                            padding: 0.3rem 0.7rem;
+                            background: {% if shoe_status == 'ok' %}#90EE90{% elif shoe_status == 'warning' %}#FFD700{% else %}#FF6B6B{% endif %};
+                            color: #000;
+                            border-radius: 12px;
+                            font-size: 0.85rem;
+                            font-weight: 600;
+                        ">
+                            👟 {{ shoe_km }} km
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="powered">powered by OpenAI</div>
+                </div>
+
+                <div class="type-coaching">
+                    <div>Ton coaching de : {{ act.type_sortie }}</div>
+                    <div class="date">le {{ act.date }}</div>
+                </div>
+
+                <div class="sub-header">
+                    <h2>Détails du dernier run</h2>
+                </div>
+
+                <!-- Layout : Distance + Allure à gauche | 3 métriques à droite -->
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 0.8rem; margin: 0 0 1rem 0;">
+                    <!-- Colonne gauche : Distance et Allure empilées -->
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <!-- Distance -->
+                        <div style="padding: 0.8rem; text-align: center; background: #f9fafb; border-radius: 6px;">
+                            <small style="color: #666; font-size: 0.85rem;">Distance</small>
+                            <div class="value" style="font-size: 1.5rem; font-weight: bold;">{{ act.distance_km }} km</div>
+                        </div>
+
+                        <!-- Allure -->
+                        <div style="padding: 0.8rem; text-align: center; background: #f0f9ff; border-radius: 6px;">
+                            <small style="color: #666; font-size: 0.85rem;">Allure</small>
+                            <div class="value" style="font-size: 1.5rem; font-weight: bold;">{{ act.allure }}/km</div>
+                        </div>
+                    </div>
+
+                    <!-- Colonne droite : 3 métriques empilées (plus petites) -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <!-- Cadence -->
+                        <div style="padding: 0.4rem; text-align: center; background: #f9fafb; border-radius: 6px;">
+                            <small style="color: #666; font-size: 0.65rem;">Cadence moy</small>
+                            <div class="value" style="font-size: 0.95rem; font-weight: bold;">{{ act.cad_mean_spm }}<span class="unit" style="font-size: 0.7rem;">spm</span></div>
+                        </div>
+
+                        <!-- Temps -->
+                        <div style="padding: 0.4rem; text-align: center; background: #f9fafb; border-radius: 6px;">
+                            <small style="color: #666; font-size: 0.65rem;">Temps</small>
+                            <div class="value" style="font-size: 0.95rem; font-weight: bold;">{{ act.duration_mmss }}</div>
+                        </div>
+
+                        <!-- Dénivelé -->
+                        <div style="padding: 0.4rem; text-align: center; background: #f9fafb; border-radius: 6px;">
+                            <small style="color: #666; font-size: 0.65rem;">Dénivelé</small>
+                            <div class="value" style="font-size: 0.95rem; font-weight: bold;">{{ act.gain_alt }} m</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards Indicateurs Comparatifs -->
+                <div style="margin: 1rem 0;">
+                    <!-- Card Efficacité Cardiaque -->
+                    <div style="background: #f0f9ff; border-left: 4px solid #775DD0; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.8rem;">
+                        <!-- Header: titre à gauche, valeur à droite -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: #666;">Efficacité Cardio (k)</div>
+                                <div style="font-size: 0.65rem; color: #9ca3af; font-style: italic;">Plus BAS = meilleur</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #775DD0;">
+                                    {% if act.k_moy != '-' %}
+                                        {{ "%.1f"|format(act.k_moy) }}
+                                    {% else %}N/A{% endif %}
+                                </div>
+                                {% if personalized_targets and act.session_category and act.session_category in personalized_targets %}
+                                    <div style="font-size: 0.7rem; color: #9ca3af;">obj: {{ personalized_targets[act.session_category].k_target }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Sparkline pleine largeur -->
+                        {% if act.k_history_last20 %}
+                        <div style="width: 100%; margin: 0.5rem 0;">
+                            <svg viewBox="0 0 300 70" preserveAspectRatio="none" style="width: 100%; height: 80px;" data-k-values="{{ act.k_history_last20 }}" data-sparkline-svg="k"
+                                {% if personalized_targets and act.session_category and act.session_category in personalized_targets %}data-k-target="{{ personalized_targets[act.session_category].k_target }}"{% endif %}
+                                {% if act.k_avg_10 %}data-k-avg="{{ act.k_avg_10 }}"{% endif %}>
+                                <!-- Fond gradient (vert en haut = bon pour k) -->
+                                <defs>
+                                    <linearGradient id="k-bg-gradient-{{ loop.index }}" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#22c55e;stop-opacity:0.15" />
+                                        <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:0.1" />
+                                        <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0.15" />
+                                    </linearGradient>
+                                </defs>
+                                <rect x="0" y="0" width="300" height="70" fill="url(#k-bg-gradient-{{ loop.index }})"/>
+
+                                <!-- Ligne objectif -->
+                                {% if personalized_targets and act.session_category and act.session_category in personalized_targets %}
+                                    <line x1="0" y1="0" x2="300" y2="0" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.8" class="target-line"/>
+                                    <text x="295" y="0" fill="#fbbf24" font-size="12" font-weight="900" text-anchor="end" class="target-text" stroke="#000" stroke-width="0.5" paint-order="stroke">obj: {{ personalized_targets[act.session_category].k_target }}</text>
+                                {% endif %}
+                                <!-- Ligne moyenne -->
+                                {% if act.k_avg_10 %}
+                                    <line x1="0" y1="0" x2="300" y2="0" stroke="#64748b" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.7" class="avg-line"/>
+                                    <text x="295" y="0" fill="#64748b" font-size="12" font-weight="900" text-anchor="end" class="avg-text" stroke="#000" stroke-width="0.5" paint-order="stroke">moy: {{ "%.1f"|format(act.k_avg_10) }}</text>
+                                {% endif %}
+                                <!-- Sparkline -->
+                                <polyline fill="none" stroke="#775DD0" stroke-width="2.5" opacity="0.95" class="sparkline-path"/>
+                                <!-- Ligne de tendance -->
+                                <line x1="0" y1="0" x2="0" y2="0" stroke="#000" stroke-width="2" opacity="0.6" stroke-dasharray="6,3" class="trend-line"/>
+                                <circle r="3" fill="#775DD0" stroke="#fff" stroke-width="1.5" class="last-point"/>
+                            </svg>
+                        </div>
+                        {% endif %}
+                        <!-- Info moyenne en dessous -->
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.3rem;">
+                            {% if act.k_history_last20 and act.k_avg_10 %}
+                                Moy. 10 derniers: {{ "%.1f"|format(act.k_avg_10) }}
+                                {% if act.k_trend == 1 %}
+                                    <span style="color: #16a34a;">↗</span>
+                                {% elif act.k_trend == -1 %}
+                                    <span style="color: #dc2626;">↘</span>
+                                {% else %}
+                                    <span style="color: #6b7280;">→</span>
+                                {% endif %}
+                            {% else %}
+                                Pas d'historique
+                            {% endif %}
+                        </div>
+                        {% if k_evolution_comment %}
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #cbd5e1;">
+                            <div style="font-size: 0.7rem; color: #4b5563; font-style: italic; line-height: 1.4;">
+                                🤖 {{ k_evolution_comment }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Card Dérive Cardio -->
+                    <div style="background: #fff7ed; border-left: 4px solid #FF9800; padding: 0.8rem; border-radius: 8px;">
+                        <!-- Header: titre à gauche, valeur à droite -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: #666;">Dérive Cardio</div>
+                                <div style="font-size: 0.65rem; color: #9ca3af; font-style: italic;">Plus bas = meilleur</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #FF9800;">
+                                    {% if act.deriv_cardio and act.deriv_cardio != '-' %}
+                                        {{ "%.1f"|format(act.deriv_cardio) }}%
+                                    {% else %}N/A{% endif %}
+                                </div>
+                                {% if personalized_targets and act.session_category and act.session_category in personalized_targets %}
+                                    <div style="font-size: 0.7rem; color: #9ca3af;">obj: {{ personalized_targets[act.session_category].drift_target }}%</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Sparkline pleine largeur -->
+                        {% if act.drift_history_last20 %}
+                        <div style="width: 100%; margin: 0.5rem 0;">
+                            <svg viewBox="0 0 300 70" preserveAspectRatio="none" style="width: 100%; height: 80px;" data-drift-values="{{ act.drift_history_last20 }}" data-sparkline-svg="drift"
+                                {% if personalized_targets and act.session_category and act.session_category in personalized_targets %}data-drift-target="{{ personalized_targets[act.session_category].drift_target }}"{% endif %}
+                                {% if act.drift_avg_10 %}data-drift-avg="{{ act.drift_avg_10 }}"{% endif %}>
+                                <!-- Fond gradient (vert en bas = bon pour drift) -->
+                                <defs>
+                                    <linearGradient id="drift-bg-gradient-{{ loop.index }}" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.15" />
+                                        <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:0.1" />
+                                        <stop offset="100%" style="stop-color:#22c55e;stop-opacity:0.15" />
+                                    </linearGradient>
+                                </defs>
+                                <rect x="0" y="0" width="300" height="70" fill="url(#drift-bg-gradient-{{ loop.index }})"/>
+
+                                <!-- Ligne objectif -->
+                                {% if personalized_targets and act.session_category and act.session_category in personalized_targets %}
+                                    <line x1="0" y1="0" x2="300" y2="0" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.8" class="target-line"/>
+                                    <text x="295" y="0" fill="#fbbf24" font-size="12" font-weight="900" text-anchor="end" class="target-text" stroke="#000" stroke-width="0.5" paint-order="stroke">obj: {{ personalized_targets[act.session_category].drift_target }}%</text>
+                                {% endif %}
+                                <!-- Ligne moyenne -->
+                                {% if act.drift_avg_10 %}
+                                    <line x1="0" y1="0" x2="300" y2="0" stroke="#64748b" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.7" class="avg-line"/>
+                                    <text x="295" y="0" fill="#64748b" font-size="12" font-weight="900" text-anchor="end" class="avg-text" stroke="#000" stroke-width="0.5" paint-order="stroke">moy: {{ "%.1f"|format(act.drift_avg_10) }}%</text>
+                                {% endif %}
+                                <!-- Sparkline -->
+                                <polyline fill="none" stroke="#FF9800" stroke-width="2.5" opacity="0.95" class="sparkline-path"/>
+                                <!-- Ligne de tendance -->
+                                <line x1="0" y1="0" x2="0" y2="0" stroke="#000" stroke-width="2" opacity="0.6" stroke-dasharray="6,3" class="trend-line"/>
+                                <circle r="3" fill="#FF9800" stroke="#fff" stroke-width="1.5" class="last-point"/>
+                            </svg>
+                        </div>
+                        {% endif %}
+                        <!-- Info moyenne en dessous -->
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.3rem;">
+                            {% if act.drift_history_last20 and act.drift_avg_10 %}
+                                Moy. 10 derniers: {{ "%.1f"|format(act.drift_avg_10) }}%
+                                {% if act.drift_trend == -1 %}
+                                    <span style="color: #16a34a;">↗</span>
+                                {% elif act.drift_trend == 1 %}
+                                    <span style="color: #dc2626;">↘</span>
+                                {% else %}
+                                    <span style="color: #6b7280;">→</span>
+                                {% endif %}
+                            {% else %}
+                                Pas d'historique
+                            {% endif %}
+                        </div>
+                        {% if drift_evolution_comment %}
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #fed7aa;">
+                            <div style="font-size: 0.7rem; color: #4b5563; font-style: italic; line-height: 1.4;">
+                                🤖 {{ drift_evolution_comment }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="sub-header">
+                    <h2>FC, Allure et Terrain</h2>
+                </div>
+
+                <!-- FC Moyenne et Max (style épuré) -->
+                <div style="display: flex; gap: 2rem; margin: 0.5rem 0 0.3rem 0; font-size: 0.9rem; color: #666;">
+                    <span>FC moyenne : <strong style="color: #1f2937;">{{ act.fc_moy }} bpm</strong>
+                        {% if running_stats and running_stats.stats_by_type and act.session_category in running_stats.stats_by_type %}
+                            {% set stats = running_stats.stats_by_type[act.session_category] %}
+                            {% if stats['fc_moyenne'] and stats['fc_moyenne']['moyenne'] %}
+                                <span style="color: #9ca3af; font-size: 0.85rem;">(moy: {{ stats['fc_moyenne']['moyenne']|int }} bpm)</span>
+                            {% endif %}
+                        {% endif %}
+                    </span>
+                    <span>FC max : <strong style="color: #1f2937;">{{ act.fc_max }} bpm</strong>
+                        {% if running_stats and running_stats.stats_by_type and act.session_category in running_stats.stats_by_type %}
+                            {% set stats = running_stats.stats_by_type[act.session_category] %}
+                            {% if stats['fc_max'] and stats['fc_max']['max'] %}
+                                <span style="color: #9ca3af; font-size: 0.85rem;">(max: {{ stats['fc_max']['max']|int }} bpm)</span>
+                            {% endif %}
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div style="margin-top: 0rem;">
+                    <div id="chartFC{{ loop.index0 }}"></div>
+
+                    <!-- Allure Moyenne et Max (style épuré) -->
+                    <div style="display: flex; gap: 2rem; margin: 1rem 0 0.3rem 0; font-size: 0.9rem; color: #666;">
+                        <span>Allure moyenne : <strong style="color: #1f2937;">{{ act.allure }}</strong>
+                            {% if running_stats and running_stats.stats_by_type and act.session_category in running_stats.stats_by_type %}
+                                {% set stats = running_stats.stats_by_type[act.session_category] %}
+                                {% if stats['allure'] and stats['allure']['moyenne'] %}
+                                    {% set allure_moy = stats['allure']['moyenne'] %}
+                                    <span style="color: #9ca3af; font-size: 0.85rem;">(moy: {{ allure_moy|int }}:{{ "%02d"|format(((allure_moy - allure_moy|int) * 60)|int) }})</span>
+                                {% endif %}
+                            {% endif %}
+                        </span>
+                        <span>Allure max : <strong style="color: #1f2937;" id="allureMax{{ loop.index0 }}">-</strong>
+                            {% if running_stats and running_stats.stats_by_type and act.session_category in running_stats.stats_by_type %}
+                                {% set stats = running_stats.stats_by_type[act.session_category] %}
+                                {% if stats['allure'] and stats['allure']['min'] %}
+                                    {% set allure_max_stat = stats['allure']['min'] %}
+                                    <span style="color: #9ca3af; font-size: 0.85rem;">(max: {{ allure_max_stat|int }}:{{ "%02d"|format(((allure_max_stat - allure_max_stat|int) * 60)|int) }})</span>
+                                {% endif %}
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div id="chartAllureContainer{{ loop.index0 }}" style="margin-top: 0px;">
+                        <canvas id="chartAllure{{ loop.index0 }}"></canvas>
+                    </div>
+                    <div id="chartElevation{{ loop.index0 }}" style="margin-top: 0px;"></div>
+
+                    <!-- Ressenti de la séance -->
+                    {% if act.feedback %}
+                    <div style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h3 style="margin: 0; font-size: 0.95rem; color: #92400e;">📝 Ressenti de la séance</h3>
+                            {% if act.feedback.mode_run == 'race' %}
+                            <span style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">🏁 COURSE</span>
+                            {% else %}
+                            <span style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">🏃 ENTRAÎNEMENT</span>
+                            {% endif %}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.85rem;">
+                            <div><strong>Difficulté:</strong> {{ act.feedback.difficulty }}/5</div>
+                            <div><strong>Note globale:</strong> {{ act.feedback.rating_stars }}/5 ⭐</div>
+                            <div><strong>Jambes:</strong> {{ act.feedback.legs_feeling }}</div>
+                            <div><strong>Cardio:</strong> {{ act.feedback.cardio_feeling }}</div>
+                        </div>
+                        {% if act.feedback.notes %}
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #fbbf24;">
+                            <em style="color: #78350f; font-size: 0.85rem;">"{{ act.feedback.notes }}"</em>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Bouton Modifier le ressenti -->
+                    <div style="margin-top: {% if act.feedback %}0.5rem{% else %}1rem{% endif %};">
+                        <a href="/feedback/{{ act.date_iso }}"
+                           style="display: block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; width: 100%; text-align: center; text-decoration: none; transition: all 0.3s; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
+                            {% if act.feedback %}✏️ Modifier le ressenti{% else %}📝 Ajouter un ressenti{% endif %}
+                        </a>
+                    </div>
+
+                    <!-- Bouton Génération Commentaire IA (Phase 3 Sprint 2B) -->
+                    <div style="margin-top: 1rem; padding-top: 1rem;">
+                        <button
+                            class="btn-generate-ai"
+                            data-activity-date="{{ act.date_iso }}"
+                            data-slide-index="{{ loop.index0 }}"
+                            onclick="generateAIComment(this)"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; width: 100%; transition: all 0.3s; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                            {% if act.ai_comment_saved %}🔄 Regénérer Commentaire IA{% else %}🤖 Générer Commentaire IA{% endif %}
+                        </button>
+                        <div id="ai-comment-{{ loop.index0 }}" class="ai-comment-container" style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea; {% if act.ai_comment %}display: block;{% else %}display: none;{% endif %}">
+                            {% if act.ai_comment %}
+                            <div>
+                                <strong style="color: #667eea; font-size: 1.1em;">💬 Analyse Physiologique IA:</strong>
+                                <div class="ai-comment-scroll">
+                                    {{ act.ai_comment | safe }}
+                                </div>
+                                <small style="color: #666; font-size: 0.85em;">
+                                    📊 Analyse générée avec objectifs personnalisés P40
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    <!-- FIN CARROUSEL PRINCIPAL -->
+
+
+    <!-- Commentaire court terme -->
+    {% if short_term and short_term.commentaire %}
+    <div class="short-term-comment">
+        📝 {{ short_term.commentaire }}
+    </div>
+    {% endif %}
+
+    <!-- Prochains runs (tableau) -->
+    {% if short_term and short_term.prochains_runs %}
+    <div class="next-runs">
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Distance (km)</th>
+                    <th>Allure cible</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for run in short_term.prochains_runs %}
+                <tr>
+                    <td>{{ run.type }}</td>
+                    <td>{{ run.distance }}</td>
+                    <td>{{ run.allure }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a class="btn" href="/profile" style="flex: 1;">⚙️ Profil & Événements</a>
+        <a class="btn" href="/objectifs" style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🎯 Objectifs</a>
+        <a class="btn" href="/zones-entrainement" style="flex: 1; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">📚 Zones d'Entraînement</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script>
+// Fonction utilitaire pour convertir les minutes décimales en format mm:ss
+function formatPace(minutesDecimal) {
+    const minutes = Math.floor(minutesDecimal);
+    const seconds = Math.round((minutesDecimal - minutes) * 60);
+    const formattedSeconds = seconds < 10 ? '0' + seconds : seconds;
+    return `${minutes}:${formattedSeconds}`;
+}
+
+// CARROUSEL PRINCIPAL
+(function(){
+    const carousel = document.getElementById('mainCarouselSlides');
+    if(!carousel) return;
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const prevBtn = document.getElementById('mainPrevBtn');
+    const nextBtn = document.getElementById('mainNextBtn');
+    const totalSlides = slides.length;
+    let currentIndex = 0;
+
+    function updateCarousel() {
+        carousel.style.transform = `translateX(${-currentIndex * 100}%)`;
+    }
+
+	// Flèche gauche → activité précédente
+	prevBtn.addEventListener('click', () => {
+		currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+		updateCarousel();
+	});
+
+	// Flèche droite → activité suivante
+	nextBtn.addEventListener('click', () => {
+		currentIndex = (currentIndex + 1) % totalSlides;
+		updateCarousel();
+	});
+
+
+    // Swipe désactivé - utiliser uniquement les flèches pour naviguer
+
+    updateCarousel();
+
+    // Création des graphiques ApexCharts pour chaque slide
+    {% for act in activities_for_carousel %}
+    {
+        const labels{{ loop.index0 }} = {{ act.labels | safe }};
+        const fc{{ loop.index0 }} = {{ act.points_fc | safe }};
+        const allure{{ loop.index0 }} = {{ act.allure_curve | safe }};
+        const elevationData{{ loop.index0 }} = {{ act.points_alt | safe }};
+        const minElevation{{ loop.index0 }} = elevationData{{ loop.index0 }}.length > 0 ? Math.min(...elevationData{{ loop.index0 }}) : 0;
+        const maxElevation{{ loop.index0 }} = elevationData{{ loop.index0 }}.length > 0 ? Math.max(...elevationData{{ loop.index0 }}) : 100;
+
+        const fcMax{{ loop.index0 }} = fc{{ loop.index0 }}.length > 0 ? Math.max(...fc{{ loop.index0 }}) : 180;
+        const allureMax{{ loop.index0 }} = allure{{ loop.index0 }}.length > 0 ? Math.max(...allure{{ loop.index0 }}) : 8;
+
+        // Afficher l'allure max formatée
+        const allureMaxMin{{ loop.index0 }} = Math.floor(allureMax{{ loop.index0 }});
+        const allureMaxSec{{ loop.index0 }} = Math.round((allureMax{{ loop.index0 }} - allureMaxMin{{ loop.index0 }}) * 60);
+        const allureMaxElement{{ loop.index0 }} = document.getElementById('allureMax{{ loop.index0 }}');
+        if (allureMaxElement{{ loop.index0 }}) {
+            allureMaxElement{{ loop.index0 }}.textContent = allureMaxMin{{ loop.index0 }} + ':' + (allureMaxSec{{ loop.index0 }} < 10 ? '0' : '') + allureMaxSec{{ loop.index0 }} + ' /km';
+        }
+
+        // ==================== GRAPHIQUE 1: FC avec zones cardiaques ====================
+
+        const fcMin{{ loop.index0 }} = fc{{ loop.index0 }}.length > 0 ? Math.min(...fc{{ loop.index0 }}) : 100;
+        const z1{{ loop.index0 }} = Math.round(fcMax{{ loop.index0 }} * 0.6);
+        const z2{{ loop.index0 }} = Math.round(fcMax{{ loop.index0 }} * 0.7);
+        const z3{{ loop.index0 }} = Math.round(fcMax{{ loop.index0 }} * 0.8);
+        const z4{{ loop.index0 }} = Math.round(fcMax{{ loop.index0 }} * 0.9);
+
+        // Calculer la distance max et déterminer l'intervalle optimal
+        const maxDistance{{ loop.index0 }} = labels{{ loop.index0 }}.length > 0 ? Math.max(...labels{{ loop.index0 }}) : 10;
+        const tickInterval{{ loop.index0 }} = maxDistance{{ loop.index0 }} < 5 ? 0.5 : 1;
+        const tickAmount{{ loop.index0 }} = Math.floor(maxDistance{{ loop.index0 }} / tickInterval{{ loop.index0 }});
+
+        const optionsFC{{ loop.index0 }} = {
+            series: [{
+                name: 'FC',
+                data: fc{{ loop.index0 }}.map((val, idx) => ({
+                    x: labels{{ loop.index0 }}[idx],
+                    y: val
+                }))
+            }],
+            chart: {
+                height: 180,
+                type: 'line',
+                group: 'activity-sync',
+                id: 'chartFC{{ loop.index0 }}',
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    },
+                    autoSelected: 'pan'
+                },
+                zoom: { enabled: true },
+                events: {
+                    mounted: function(chartContext, config) {
+                        const chartEl = chartContext.el;
+                        chartEl.addEventListener('touchstart', function(e) {
+                            e.stopPropagation();
+                        }, { passive: false });
+                        chartEl.addEventListener('touchmove', function(e) {
+                            e.stopPropagation();
+                        }, { passive: false });
+                    }
+                },
+                offsetY: 0,
+                parentHeightOffset: 0
+            },
+            stroke: {
+                width: 2,
+                curve: 'smooth'
+            },
+            colors: ['#ef4444'],
+            xaxis: {
+                type: 'numeric',
+                decimalsInFloat: 1,
+                min: 0,
+                max: maxDistance{{ loop.index0 }},
+                labels: {
+                    show: true,
+                    style: { fontSize: '12px' },
+                    formatter: v => v ? v.toFixed(1) : ''
+                }
+            },
+            yaxis: {
+                min: Math.floor(fcMin{{ loop.index0 }} * 0.92),
+                max: Math.ceil(fcMax{{ loop.index0 }} * 1.02),
+                tickAmount: 4,
+                labels: {
+                    style: {
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        colors: '#1f2937'
+                    },
+                    formatter: function(val) { return Math.round(val); }
+                },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            annotations: {
+                yaxis: [
+                    {
+                        y: z4{{ loop.index0 }},
+                        y2: fcMax{{ loop.index0 }} * 1.1,
+                        fillColor: '#ef4444',
+                        opacity: 0.10
+                    },
+                    {
+                        y: z3{{ loop.index0 }},
+                        y2: z4{{ loop.index0 }},
+                        fillColor: '#f97316',
+                        opacity: 0.10
+                    },
+                    {
+                        y: z2{{ loop.index0 }},
+                        y2: z3{{ loop.index0 }},
+                        fillColor: '#facc15',
+                        opacity: 0.10
+                    },
+                    {
+                        y: z1{{ loop.index0 }},
+                        y2: z2{{ loop.index0 }},
+                        fillColor: '#22c55e',
+                        opacity: 0.10
+                    },
+                    {
+                        y: Math.floor(fcMin{{ loop.index0 }} * 0.90),
+                        y2: z1{{ loop.index0 }},
+                        fillColor: '#3b82f6',
+                        opacity: 0.10
+                    }
+                ]
+            },
+            legend: { show: false },
+            tooltip: {
+                y: { formatter: function(val) { return Math.round(val) + ' bpm'; } }
+            },
+            grid: {
+                borderColor: '#f1f1f1',
+                padding: {
+                    top: -5,
+                    bottom: 10,
+                    left: 0,
+                    right: 0
+                }
+            }
+        };
+
+        // ==================== GRAPHIQUE 2: Allure par km (style Strava) ====================
+
+        // Calculer l'allure et FC par km
+        function calculateMetricsPerKm(distances, paces, heartRates) {
+            const kmData = [];
+            const maxDistance = Math.max(...distances);
+            const totalKm = Math.floor(maxDistance);
+
+            // Traiter les km complets
+            for (let km = 0; km < totalKm; km++) {
+                const pacesInKm = [];
+                const hrsInKm = [];
+                for (let i = 0; i < distances.length; i++) {
+                    if (distances[i] >= km && distances[i] < km + 1) {
+                        pacesInKm.push(paces[i]);
+                        if (heartRates[i]) {
+                            hrsInKm.push(heartRates[i]);
+                        }
+                    }
+                }
+                if (pacesInKm.length > 0) {
+                    const avgPace = pacesInKm.reduce((a, b) => a + b, 0) / pacesInKm.length;
+                    const avgHr = hrsInKm.length > 0
+                        ? hrsInKm.reduce((a, b) => a + b, 0) / hrsInKm.length
+                        : null;
+                    kmData.push({
+                        km: km + 1,
+                        pace: avgPace,
+                        hr: avgHr
+                    });
+                }
+            }
+
+            // Ajouter la dernière section fractionnaire si elle existe
+            if (maxDistance > totalKm) {
+                const pacesInLastKm = [];
+                const hrsInLastKm = [];
+                for (let i = 0; i < distances.length; i++) {
+                    if (distances[i] >= totalKm && distances[i] <= maxDistance) {
+                        pacesInLastKm.push(paces[i]);
+                        if (heartRates[i]) {
+                            hrsInLastKm.push(heartRates[i]);
+                        }
+                    }
+                }
+                if (pacesInLastKm.length > 0) {
+                    const avgPace = pacesInLastKm.reduce((a, b) => a + b, 0) / pacesInLastKm.length;
+                    const avgHr = hrsInLastKm.length > 0
+                        ? hrsInLastKm.reduce((a, b) => a + b, 0) / hrsInLastKm.length
+                        : null;
+                    kmData.push({
+                        km: maxDistance,  // Ex: 6.4 km
+                        pace: avgPace,
+                        hr: avgHr
+                    });
+                }
+            }
+
+            return kmData;
+        }
+
+        const kmData{{ loop.index0 }} = calculateMetricsPerKm(labels{{ loop.index0 }}, allure{{ loop.index0 }}, fc{{ loop.index0 }});
+        const kmPaces{{ loop.index0 }} = kmData{{ loop.index0 }}.map(d => ({ km: d.km, pace: d.pace }));
+
+        // Calculer moyenne et objectif
+        const avgPace{{ loop.index0 }} = kmPaces{{ loop.index0 }}.length > 0
+            ? kmPaces{{ loop.index0 }}.reduce((sum, item) => sum + item.pace, 0) / kmPaces{{ loop.index0 }}.length
+            : 5.5;
+
+        {% if running_stats and running_stats.stats_by_type and act.session_category in running_stats.stats_by_type %}
+            {% set stats = running_stats.stats_by_type[act.session_category] %}
+            const targetPace{{ loop.index0 }} = {{ stats['allure']['moyenne'] if stats.get('allure', {}).get('moyenne') else 5.5 }};
+        {% else %}
+            const targetPace{{ loop.index0 }} = 5.5;
+        {% endif %}
+
+        // Resserrer l'échelle autour des valeurs réelles pour mieux voir les différences
+        const allureMin = kmPaces{{ loop.index0 }}.length > 0
+            ? Math.max(3.5, Math.floor(Math.min(...kmPaces{{ loop.index0 }}.map(k => k.pace)) * 0.95))
+            : 4.0;
+        const allureMax = kmPaces{{ loop.index0 }}.length > 0
+            ? Math.min(8.0, Math.ceil(Math.max(...kmPaces{{ loop.index0 }}.map(k => k.pace)) * 1.05))
+            : 7.0;
+
+        // Pour le formatter des labels yaxis
+        const kmPacesData{{ loop.index0 }} = kmPaces{{ loop.index0 }};
+        const totalKms{{ loop.index0 }} = kmPacesData{{ loop.index0 }}.length;
+
+        const optionsAllure{{ loop.index0 }} = {
+            series: [{
+                name: 'Allure',
+                data: kmPaces{{ loop.index0 }}.map(item => item.pace)
+            }],
+            chart: {
+                height: Math.max(200, kmPaces{{ loop.index0 }}.length * 28),
+                type: 'bar',
+                id: 'chartAllure{{ loop.index0 }}',
+                toolbar: {
+                    show: false
+                }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    barHeight: '90%',
+                    dataLabels: {
+                        position: 'center'
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val) {
+                    const min = Math.floor(val);
+                    const sec = Math.round((val - min) * 60);
+                    return min + ':' + (sec < 10 ? '0' : '') + sec;
+                },
+                style: {
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    colors: ['#fff']
+                }
+            },
+            colors: ['#FC4C02'],
+            xaxis: {
+                reversed: true,
+                min: allureMin,
+                max: allureMax,
+                labels: {
+                    show: false
+                }
+            },
+            yaxis: {
+                labels: {
+                    show: false
+                }
+            },
+            annotations: {
+                xaxis: [
+                    {
+                        x: avgPace{{ loop.index0 }},
+                        borderColor: '#0099FF',
+                        strokeDashArray: 0,
+                        borderWidth: 3,
+                        label: {
+                            text: 'Moy: ' + formatPace(avgPace{{ loop.index0 }}),
+                            position: 'top',
+                            offsetY: 0,
+                            style: {
+                                color: '#fff',
+                                background: '#0099FF',
+                                fontSize: '10px',
+                                fontWeight: 'bold'
+                            }
+                        }
+                    },
+                    {
+                        x: targetPace{{ loop.index0 }},
+                        borderColor: '#10b981',
+                        strokeDashArray: 5,
+                        borderWidth: 2,
+                        label: {
+                            text: 'Obj: ' + formatPace(targetPace{{ loop.index0 }}),
+                            position: 'top',
+                            offsetY: 20,
+                            style: {
+                                color: '#fff',
+                                background: '#10b981',
+                                fontSize: '10px',
+                                fontWeight: 'bold'
+                            }
+                        }
+                    }
+                ]
+            },
+            grid: {
+                xaxis: {
+                    lines: { show: true }
+                },
+                yaxis: {
+                    lines: { show: false }
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function(val) {
+                        const min = Math.floor(val);
+                        const sec = Math.round((val - min) * 60);
+                        return min + ':' + (sec < 10 ? '0' : '') + sec + '/km';
+                    }
+                }
+            }
+        };
+
+        // ==================== GRAPHIQUE 3: Élévation avec altitude relative ====================
+
+        const altMin{{ loop.index0 }} = elevationData{{ loop.index0 }}.length > 0 ? Math.min(...elevationData{{ loop.index0 }}) : 0;
+        const altitudeRelative{{ loop.index0 }} = elevationData{{ loop.index0 }}.map(alt => alt - altMin{{ loop.index0 }});
+        const altRelMax{{ loop.index0 }} = Math.max(...altitudeRelative{{ loop.index0 }});
+
+        const optionsElevation{{ loop.index0 }} = {
+            series: [{
+                name: 'Élévation',
+                data: altitudeRelative{{ loop.index0 }}.map((val, idx) => ({
+                    x: labels{{ loop.index0 }}[idx],
+                    y: val
+                }))
+            }],
+            chart: {
+                height: 140,
+                type: 'area',
+                group: 'activity-sync',
+                id: 'chartElevation{{ loop.index0 }}',
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    },
+                    autoSelected: 'pan'
+                },
+                zoom: { enabled: true },
+                events: {
+                    mounted: function(chartContext, config) {
+                        const chartEl = chartContext.el;
+                        chartEl.addEventListener('touchstart', function(e) {
+                            e.stopPropagation();
+                        }, { passive: false });
+                        chartEl.addEventListener('touchmove', function(e) {
+                            e.stopPropagation();
+                        }, { passive: false });
+                    }
+                },
+                offsetY: 0,
+                parentHeightOffset: 0
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 2,
+                colors: ['#654321']
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.7,
+                    opacityTo: 0.2,
+                    stops: [0, 100],
+                    colorStops: [
+                        { offset: 0, color: '#8b4513', opacity: 0.8 },
+                        { offset: 100, color: '#f5deb3', opacity: 0.3 }
+                    ]
+                }
+            },
+            xaxis: {
+                type: 'numeric',
+                decimalsInFloat: 1,
+                min: 0,
+                max: maxDistance{{ loop.index0 }},
+                title: {
+                    text: 'Distance (km)',
+                    style: { fontSize: '11px', fontWeight: 600 }
+                },
+                labels: {
+                    style: { fontSize: '12px' },
+                    formatter: function(val) {
+                        return val ? parseFloat(val).toFixed(1) : '';
+                    }
+                }
+            },
+            yaxis: {
+                min: 0,
+                max: Math.ceil(altRelMax{{ loop.index0 }} * 1.1),
+                title: {
+                    text: 'Dénivelé (m)',
+                    style: { fontSize: '11px', fontWeight: 600 }
+                },
+                labels: {
+                    style: { fontSize: '10px' },
+                    formatter: function(val) { return Math.round(val); }
+                }
+            },
+            legend: { show: false },
+            tooltip: {
+                y: { formatter: function(val) { return Math.round(val) + ' m'; } }
+            },
+            grid: {
+                borderColor: '#f1f1f1',
+                padding: {
+                    top: -5,
+                    bottom: 10,
+                    left: 0,
+                    right: 0
+                }
+            },
+            annotations: {}
+        };
+
+        // Rendre les graphiques
+        const chartFC{{ loop.index0 }} = new ApexCharts(
+            document.querySelector('#chartFC{{ loop.index0 }}'),
+            optionsFC{{ loop.index0 }}
+        );
+        chartFC{{ loop.index0 }}.render();
+
+        // ==================== Graphique Allure avec Chart.js ====================
+        // Définir la hauteur du conteneur (barres plus rapprochées)
+        const containerHeight{{ loop.index0 }} = Math.max(200, totalKms{{ loop.index0 }} * 25 + 40);
+        document.getElementById('chartAllureContainer{{ loop.index0 }}').style.height = containerHeight{{ loop.index0 }} + 'px';
+
+        const ctx{{ loop.index0 }} = document.getElementById('chartAllure{{ loop.index0 }}').getContext('2d');
+        const chartAllure{{ loop.index0 }} = new Chart(ctx{{ loop.index0 }}, {
+            type: 'bar',
+            data: {
+                labels: kmPacesData{{ loop.index0 }}.map((item, idx) => {
+                    const isLast = idx === totalKms{{ loop.index0 }} - 1;
+                    const kmValue = item.km;
+
+                    // Si dernier km avec décimale (ex: 6.4)
+                    if (isLast && kmValue % 1 !== 0) {
+                        return kmValue.toFixed(1);
+                    }
+
+                    // Sinon afficher l'entier arrondi supérieur
+                    return Math.ceil(kmValue);
+                }),
+                datasets: [{
+                    label: 'Allure (min/km)',
+                    data: kmPacesData{{ loop.index0 }}.map(item => item.pace),
+                    backgroundColor: '#FC4C02',
+                    borderColor: '#FC4C02',
+                    borderWidth: 1,
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.95,
+                    datalabels: {
+                        display: false  // Désactiver datalabels par défaut, on va dessiner manuellement
+                    }
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        right: 80
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return formatPace(context.parsed.x);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        position: 'top',
+                        min: allureMin,
+                        max: allureMax,
+                        ticks: {
+                            display: false
+                        },
+                        grid: {
+                            display: false
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#000',
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels, {
+                afterDatasetsDraw: function(chart) {
+                    const ctx = chart.ctx;
+                    const yAxis = chart.scales.y;
+                    const xAxis = chart.scales.x;
+
+                    // Trouver la valeur maximale pour aligner tous les labels
+                    const maxValue = Math.max(...kmPacesData{{ loop.index0 }}.map(item => item.pace));
+                    const labelX = xAxis.getPixelForValue(maxValue) + 10;
+
+                    // Dessiner les labels d'allure alignés à droite
+                    ctx.save();
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'left';
+
+                    chart.data.datasets[0].data.forEach((value, index) => {
+                        const y = yAxis.getPixelForValue(index);
+                        ctx.fillText(formatPace(value), labelX, y + 5);
+                    });
+
+                    ctx.restore();
+
+                    // Dessiner les lignes moyenne et objectif
+                    const avgX = xAxis.getPixelForValue(avgPace{{ loop.index0 }});
+                    const targetX = xAxis.getPixelForValue(targetPace{{ loop.index0 }});
+
+                    // Ligne moyenne (bleue) - Plus épaisse et visible
+                    ctx.save();
+                    ctx.strokeStyle = '#0099FF';
+                    ctx.lineWidth = 4;
+                    ctx.setLineDash([]);
+                    ctx.globalAlpha = 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(avgX, yAxis.top);
+                    ctx.lineTo(avgX, yAxis.bottom);
+                    ctx.stroke();
+
+                    // Label moyenne en bas du graphique avec fond blanc
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(avgX - 42, yAxis.bottom - 20, 85, 20);
+                    ctx.fillStyle = '#0099FF';
+                    ctx.font = 'bold 13px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Moy: ' + formatPace(avgPace{{ loop.index0 }}), avgX, yAxis.bottom - 5);
+
+                    // Ligne objectif (verte) - Plus épaisse
+                    ctx.strokeStyle = '#10b981';
+                    ctx.lineWidth = 4;
+                    ctx.setLineDash([8, 4]);
+                    ctx.globalAlpha = 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(targetX, yAxis.top);
+                    ctx.lineTo(targetX, yAxis.bottom);
+                    ctx.stroke();
+
+                    // Label objectif en bas du graphique avec fond blanc
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(targetX - 37, yAxis.bottom - 45, 75, 20);
+                    ctx.fillStyle = '#10b981';
+                    ctx.font = 'bold 13px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Obj: ' + formatPace(targetPace{{ loop.index0 }}), targetX, yAxis.bottom - 30);
+
+                    ctx.restore();
+                }
+            }]
+        });
+
+        const chartElevation{{ loop.index0 }} = new ApexCharts(
+            document.querySelector('#chartElevation{{ loop.index0 }}'),
+            optionsElevation{{ loop.index0 }}
+        );
+        chartElevation{{ loop.index0 }}.render();
+    }
+    {% endfor %}
+})();
+</script>
+
+<!-- JavaScript pour les sparklines k et drift -->
+<script>
+(function() {
+    // Fonction pour dessiner une sparkline
+    function drawSparkline(svg, type) {
+        const dataAttr = type === 'k' ? 'kValues' : 'driftValues';
+        const targetAttr = type === 'k' ? 'kTarget' : 'driftTarget';
+        const avgAttr = type === 'k' ? 'kAvg' : 'driftAvg';
+
+        const valuesStr = svg.dataset[dataAttr];
+        if (!valuesStr) return;
+
+        let values = JSON.parse(valuesStr);
+        if (!values || values.length < 2) return;
+
+        // Filtrer les valeurs aberrantes (outliers)
+        // Pour k: valeurs négatives ou > 15 sont aberrantes
+        // Pour drift: valeurs < -20% ou > 30% sont aberrantes (nouvelle méthode en %)
+        if (type === 'k') {
+            values = values.filter(v => v >= 0 && v <= 15);
+        } else {
+            values = values.filter(v => v >= -20 && v <= 30);
+        }
+
+        if (values.length < 2) return;
+
+        // Trouver min/max pour normalisation (inclure objectif et moyenne)
+        let allValues = [...values];
+
+        if (svg.dataset[targetAttr]) {
+            allValues.push(parseFloat(svg.dataset[targetAttr]));
+        }
+
+        if (svg.dataset[avgAttr]) {
+            allValues.push(parseFloat(svg.dataset[avgAttr]));
+        }
+
+        // Calculer min/max avec marge pour resserrer l'échelle
+        let minVal = Math.min(...allValues);
+        let maxVal = Math.max(...allValues);
+        let range = maxVal - minVal || 1;
+
+        // Ajouter 10% de marge de chaque côté pour les labels
+        const margin = range * 0.1;
+        minVal = minVal - margin;
+        maxVal = maxVal + margin;
+        range = maxVal - minVal;
+
+        // Paramètres
+        const width = 300;
+        const height = 70;
+        const paddingH = 10;
+        const paddingV = 4; // Padding minimal pour les bords
+        const stepX = (width - paddingH * 2) / (values.length - 1);
+
+        // Générer les points de la courbe
+        const points = values.map((val, i) => {
+            const x = paddingH + i * stepX;
+            const y = height - paddingV - ((val - minVal) / range) * (height - paddingV * 2);
+            return `${x},${y}`;
+        }).join(' ');
+
+        // Dessiner la polyline
+        const polyline = svg.querySelector('.sparkline-path');
+        if (polyline) {
+            polyline.setAttribute('points', points);
+        }
+
+        // Positionner le dernier point
+        const lastPoint = svg.querySelector('.last-point');
+        if (lastPoint) {
+            const lastX = paddingH + (values.length - 1) * stepX;
+            const lastY = height - paddingV - ((values[values.length - 1] - minVal) / range) * (height - paddingV * 2);
+            lastPoint.setAttribute('cx', lastX);
+            lastPoint.setAttribute('cy', lastY);
+        }
+
+        // Calculer et dessiner la ligne de tendance (régression linéaire)
+        const trendLine = svg.querySelector('.trend-line');
+        if (trendLine && values.length >= 3) {
+            // Régression linéaire: y = ax + b
+            const n = values.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+
+            for (let i = 0; i < n; i++) {
+                sumX += i;
+                sumY += values[i];
+                sumXY += i * values[i];
+                sumX2 += i * i;
+            }
+
+            const a = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const b = (sumY - a * sumX) / n;
+
+            // Points de début et fin de la ligne de tendance
+            const y0 = b;
+            const y1 = a * (n - 1) + b;
+
+            const x0 = paddingH;
+            const x1 = paddingH + (n - 1) * stepX;
+            const trendY0 = height - paddingV - ((y0 - minVal) / range) * (height - paddingV * 2);
+            const trendY1 = height - paddingV - ((y1 - minVal) / range) * (height - paddingV * 2);
+
+            trendLine.setAttribute('x1', x0);
+            trendLine.setAttribute('y1', trendY0);
+            trendLine.setAttribute('x2', x1);
+            trendLine.setAttribute('y2', trendY1);
+        }
+
+        // Positionner la ligne objectif
+        const targetLine = svg.querySelector('.target-line');
+        const targetText = svg.querySelector('.target-text');
+        const targetBg = svg.querySelector('.target-bg');
+        if (targetLine && svg.dataset[targetAttr]) {
+            const targetVal = parseFloat(svg.dataset[targetAttr]);
+            const targetY = height - paddingV - ((targetVal - minVal) / range) * (height - paddingV * 2);
+            targetLine.setAttribute('y1', targetY);
+            targetLine.setAttribute('y2', targetY);
+        }
+        // Positionner le label "obj" en haut à droite
+        if (targetText) {
+            targetText.setAttribute('y', 11);
+        }
+        if (targetBg) {
+            targetBg.setAttribute('x', 235);
+            targetBg.setAttribute('y', 2);
+        }
+
+        // Positionner la ligne moyenne
+        const avgLine = svg.querySelector('.avg-line');
+        const avgText = svg.querySelector('.avg-text');
+        const avgBg = svg.querySelector('.avg-bg');
+        if (avgLine && svg.dataset[avgAttr]) {
+            const avgVal = parseFloat(svg.dataset[avgAttr]);
+            const avgY = height - paddingV - ((avgVal - minVal) / range) * (height - paddingV * 2);
+            avgLine.setAttribute('y1', avgY);
+            avgLine.setAttribute('y2', avgY);
+        }
+        // Positionner le label "moy" en bas à droite
+        if (avgText) {
+            avgText.setAttribute('y', height - 5);
+        }
+        if (avgBg) {
+            avgBg.setAttribute('x', 225);
+            avgBg.setAttribute('y', height - 16);
+        }
+    }
+
+    // Dessiner toutes les sparklines k
+    document.querySelectorAll('[data-sparkline-svg="k"]').forEach(function(svg) {
+        drawSparkline(svg, 'k');
+    });
+
+    // Dessiner toutes les sparklines drift
+    document.querySelectorAll('[data-sparkline-svg="drift"]').forEach(function(svg) {
+        drawSparkline(svg, 'drift');
+    });
+})();
+</script>
+
+<!-- JavaScript pour génération commentaires IA à la demande -->
+<script>
+async function generateAIComment(button) {
+    const activityDate = button.dataset.activityDate;
+    const slideIndex = button.dataset.slideIndex;
+    const commentDiv = document.getElementById(`ai-comment-${slideIndex}`);
+
+    // Désactiver le bouton et afficher le chargement
+    button.disabled = true;
+    button.innerHTML = '⏳ Génération en cours... (5-10 sec)';
+    button.style.opacity = '0.6';
+
+    try {
+        const response = await fetch(`/generate_ai_comment/${activityDate}`);
+        const data = await response.json();
+
+        if (data.success) {
+            // Afficher le commentaire
+            commentDiv.style.display = 'block';
+            commentDiv.innerHTML = `
+                <div>
+                    <strong style="color: #667eea; font-size: 1.1em;">💬 Coach IA:</strong>
+                    <p style="margin: 0.75rem 0; line-height: 1.7; white-space: pre-line;">${data.comment}</p>
+                    <small style="color: #666; font-size: 0.85em;">
+                        📊 ${data.segments_count} segments analysés • ${data.patterns_count} patterns détectés
+                    </small>
+                </div>
+            `;
+            // Garder le bouton visible mais changer le texte pour "Regénérer"
+            button.disabled = false;
+            button.innerHTML = '🔄 Regénérer Commentaire IA';
+            button.style.opacity = '1';
+        } else {
+            // Afficher l'erreur
+            commentDiv.style.display = 'block';
+            commentDiv.style.borderLeftColor = '#dc3545';
+            
+            // Si c'est un problème de feedback manquant, afficher un message spécial
+            if (data.needs_feedback) {
+                commentDiv.innerHTML = `
+                    <p style="color: #f59e0b; font-weight: bold; margin: 0;">⚠️ ${data.error}</p>
+                    <p style="color: #666; font-size: 0.9em; margin-top: 0.5rem;">
+                        👆 Remplissez d'abord le ressenti de la séance ci-dessus, puis réessayez.
+                    </p>
+                `;
+            } else {
+                commentDiv.innerHTML = `
+                    <p style="color: #dc3545; font-weight: bold; margin: 0;">⚠️ ${data.error}</p>
+                `;
+            }
+            
+            button.disabled = false;
+            button.innerHTML = '🔄 Réessayer';
+            button.style.opacity = '1';
+        }
+    } catch (error) {
+        // Erreur réseau
+        commentDiv.style.display = 'block';
+        commentDiv.style.borderLeftColor = '#dc3545';
+        commentDiv.innerHTML = `
+            <p style="color: #dc3545; font-weight: bold; margin: 0;">❌ Erreur réseau. Vérifiez votre connexion.</p>
+        `;
+        button.disabled = false;
+        button.innerHTML = '🔄 Réessayer';
+        button.style.opacity = '1';
+        console.error('Erreur génération commentaire IA:', error);
+    }
+}
+
+// Style hover pour les boutons (CSS dynamique)
+document.addEventListener('DOMContentLoaded', function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .btn-generate-ai:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5) !important;
+        }
+        .btn-generate-ai:active:not(:disabled) {
+            transform: translateY(0);
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide des Programmes - Track2Train</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        h2 {
+            color: #764ba2;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        h3 {
+            color: #667eea;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .run-card {
+            background: #f9fafb;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+
+        .run-card h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .run-card .run-day {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .run-card .run-details {
+            margin-top: 8px;
+            color: #555;
+        }
+
+        .adaptive-logic {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .adaptive-logic h4 {
+            color: #d97706;
+            margin-bottom: 10px;
+        }
+
+        .decision-tree {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .decision-tree li {
+            margin: 8px 0;
+            list-style: none;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .decision-tree li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #f59e0b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        table tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .highlight {
+            background: #dcfce7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .btn-back {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+
+        .btn-back:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Guide de Fabrication des Programmes</h1>
+        <p class="subtitle">Comprendre comment Track2Train génère vos programmes d'entraînement personnalisés</p>
+
+        <div class="section">
+            <h2>🎯 Structure des Programmes</h2>
+            <p>Chaque semaine comporte <strong>4 runs</strong> organisés selon le pattern optimal pour la préparation semi-marathon :</p>
+
+            <div class="run-card">
+                <h4 class="run-day">🏃 Run 1 - Lundi : Récupération</h4>
+                <div class="run-details">
+                    <strong>Distance :</strong> 5-6 km<br>
+                    <strong>Allure :</strong> Moyenne récente + 20 sec/km (facile)<br>
+                    <strong>FC cible :</strong> 125-135 bpm (Zones 1-2)<br>
+                    <strong>Objectif :</strong> Endurance de base, récupération active après le weekend
+                </div>
+            </div>
+
+            <div class="run-card">
+                <h4 class="run-day">⚡ Run 2 - Mercredi : Tempo</h4>
+                <div class="run-details">
+                    <strong>Distance :</strong> 8-10 km<br>
+                    <strong>Allure :</strong> Moyenne des 10 derniers runs "endurance"<br>
+                    <strong>FC cible :</strong> 135-145 bpm (Zones 2-3)<br>
+                    <strong>Objectif :</strong> Travail au seuil aérobie, allure semi-marathon
+                </div>
+            </div>
+
+            <div class="run-card" style="border-left-color: #f59e0b;">
+                <h4 class="run-day">🎲 Run 3 - Vendredi : <span class="highlight">ADAPTATIF</span></h4>
+                <div class="run-details">
+                    <strong>Distance :</strong> 5 km<br>
+                    <strong>Type :</strong> Fractionné OU Récupération (selon bilan semaine précédente)<br>
+                    <strong>Objectif :</strong> Combler les faiblesses ou favoriser la récupération
+                </div>
+            </div>
+
+            <div class="run-card">
+                <h4 class="run-day">🎯 Run 4 - Dimanche : Long Run</h4>
+                <div class="run-details">
+                    <strong>Distance :</strong> 12-15 km<br>
+                    <strong>Allure :</strong> Moyenne des 10 derniers long runs + 5 sec/km<br>
+                    <strong>FC cible :</strong> 130-140 bpm (Zones 2-3)<br>
+                    <strong>Objectif :</strong> Développer la capacité aérobie, endurance longue
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🤖 Run 3 Adaptatif : La Logique Intelligente</h2>
+
+            <div class="adaptive-logic">
+                <h4>📊 Comment l'IA Décide du Type de Run</h4>
+                <p>L'IA analyse le <strong>bilan de la semaine précédente</strong> et les <strong>points d'amélioration</strong> pour choisir intelligemment entre :</p>
+
+                <h3 style="color: #d97706; margin-top: 20px;">🔥 Option 1 : Fractionné</h3>
+                <p><strong>Déclenché si le bilan montre :</strong></p>
+                <ul class="decision-tree">
+                    <li>Manque d'intensité dans les runs de la semaine</li>
+                    <li>Zones FC Z3-Z4 faibles (< 30% du temps)</li>
+                    <li>Seuil insuffisant pour objectif semi</li>
+                    <li>Allures trop lentes par rapport à l'objectif</li>
+                </ul>
+                <p style="margin-top: 10px;"><strong>Configuration :</strong></p>
+                <ul class="decision-tree">
+                    <li>5 km avec intervalles 400-800m</li>
+                    <li>Allure : 30 sec/km plus rapide que moyenne</li>
+                    <li>FC : 150-165 bpm (Zones 4-5)</li>
+                    <li>k cible : ~6.5 (intensité élevée acceptable)</li>
+                </ul>
+
+                <h3 style="color: #d97706; margin-top: 20px;">🌱 Option 2 : Récupération</h3>
+                <p><strong>Déclenché si le bilan montre :</strong></p>
+                <ul class="decision-tree">
+                    <li>Fatigue accumulée (k élevé sur plusieurs runs)</li>
+                    <li>Dérive cardiaque élevée (> objectif +3%)</li>
+                    <li>Signes de surentraînement</li>
+                    <li>Runs trop intenses la semaine précédente</li>
+                </ul>
+                <p style="margin-top: 10px;"><strong>Configuration :</strong></p>
+                <ul class="decision-tree">
+                    <li>5 km en endurance facile</li>
+                    <li>Allure : moyenne + 25 sec/km (très facile)</li>
+                    <li>FC : 125-135 bpm (Zones 1-2)</li>
+                    <li>k cible : ~4.9 (économie maximale)</li>
+                </ul>
+
+                <div class="warning" style="margin-top: 20px;">
+                    <strong>⚠️ Par défaut :</strong> Si aucun signal clair dans le bilan, l'IA choisit la <strong>récupération</strong> pour maximiser la fraîcheur avant le long run du dimanche.
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Typologie Complète des Runs</h2>
+            <p>Track2Train reconnaît automatiquement <strong>5 types de runs</strong> selon la distance et l'allure :</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Critères</th>
+                        <th>Zones FC</th>
+                        <th>k cible</th>
+                        <th>Dérive cible</th>
+                        <th>FC cible</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #d1fae5;">
+                        <td><strong>tempo_recup</strong><br><small>Récupération</small></td>
+                        <td>&lt; 7 km ET &gt; 5:20/km</td>
+                        <td>Z1-Z2</td>
+                        <td>~4.9</td>
+                        <td>~6-7%</td>
+                        <td>125-135</td>
+                    </tr>
+                    <tr style="background: #fef3c7;">
+                        <td><strong>tempo_rapide</strong><br><small>Tempo court intense</small></td>
+                        <td>&lt; 7 km ET ≤ 5:20/km</td>
+                        <td>Z2-Z3</td>
+                        <td>~5.6</td>
+                        <td>~8-9%</td>
+                        <td>135-145</td>
+                    </tr>
+                    <tr style="background: #fed7aa;">
+                        <td><strong>endurance</strong><br><small>Allure semi-marathon</small></td>
+                        <td>7-11 km</td>
+                        <td>Z2-Z3</td>
+                        <td>~5.2</td>
+                        <td>~10-12%</td>
+                        <td>135-145</td>
+                    </tr>
+                    <tr style="background: #dbeafe;">
+                        <td><strong>long_run</strong><br><small>Sortie longue</small></td>
+                        <td>&gt; 11 km</td>
+                        <td>Z2-Z3</td>
+                        <td>~5.2</td>
+                        <td>~14-16%</td>
+                        <td>130-140</td>
+                    </tr>
+                    <tr style="background: #fecaca;">
+                        <td><strong>fractionne</strong><br><small>Intervalles</small></td>
+                        <td>Détecté par IA (intervalles)</td>
+                        <td>Z4-Z5</td>
+                        <td>~6.5</td>
+                        <td>~15-18%</td>
+                        <td>150-165</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info" style="margin-top: 20px;">
+                <strong>🎯 Nouveauté :</strong> Le seuil de 5:20/km permet de distinguer les runs courts <strong>faciles</strong> (tempo_recup) des runs courts <strong>intenses</strong> (tempo_rapide). C'est automatique !
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📈 Personnalisation des Allures</h2>
+            <p>Les allures cibles sont calculées à partir de <strong>vos performances réelles</strong> des 10 derniers runs de chaque type :</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type de Run</th>
+                        <th>Base de Calcul</th>
+                        <th>Ajustement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>tempo_recup</strong> (Récupération)</td>
+                        <td>Moyenne 10 derniers "tempo_recup"</td>
+                        <td>+20 à +25 sec/km</td>
+                    </tr>
+                    <tr>
+                        <td><strong>tempo_rapide</strong> (Tempo court)</td>
+                        <td>Moyenne 10 derniers "tempo_rapide"</td>
+                        <td>Aucun (allure réelle)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>endurance</strong> (Tempo/Semi)</td>
+                        <td>Moyenne 10 derniers "endurance"</td>
+                        <td>Aucun (allure réelle)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>fractionne</strong> (Intervalles)</td>
+                        <td>Moyenne générale</td>
+                        <td>-30 sec/km</td>
+                    </tr>
+                    <tr>
+                        <td><strong>long_run</strong> (Sortie longue)</td>
+                        <td>Moyenne 10 derniers "long_run"</td>
+                        <td>+5 sec/km (marge sécurité)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info">
+                <strong>💡 Astuce :</strong> Plus vous renseignez vos ressentis et cochez "dernier run de la semaine", plus l'IA affine ses recommandations !
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Objectifs Personnalisés (P40)</h2>
+            <p>Les objectifs de <strong>k</strong> (efficacité cardiaque) et <strong>dérive</strong> sont calculés sur le <strong>percentile 40</strong> de vos 10 derniers runs du même type :</p>
+
+            <table>
+                <tr>
+                    <th>Métrique</th>
+                    <th>Signification</th>
+                    <th>Objectif</th>
+                </tr>
+                <tr>
+                    <td><strong>k (efficacité)</strong></td>
+                    <td>Ratio distance/coût cardiaque</td>
+                    <td>< P40 (économie de course)</td>
+                </tr>
+                <tr>
+                    <td><strong>Dérive cardio</strong></td>
+                    <td>Augmentation FC sur la durée</td>
+                    <td>< P40 (stabilité effort)</td>
+                </tr>
+            </table>
+
+            <p style="margin-top: 15px;">Ces objectifs sont <strong>réalistes et atteignables</strong> car basés sur vos propres performances passées (60% ont fait mieux, vous ciblez le top 40%).</p>
+        </div>
+
+        <div class="section">
+            <h2>📅 Génération et Mise à Jour</h2>
+            <p>Le programme est régénéré automatiquement :</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li style="margin: 8px 0;">✅ Chaque <strong>lundi matin</strong> (nouvelle semaine)</li>
+                <li style="margin: 8px 0;">✅ Après avoir coché <strong>"dernier run de la semaine"</strong> et généré le bilan</li>
+                <li style="margin: 8px 0;">✅ L'IA intègre le bilan dans le programme suivant pour adaptation intelligente</li>
+            </ul>
+
+            <div class="warning" style="margin-top: 20px;">
+                <strong>⚙️ Points d'amélioration → Run 3 adaptatif</strong><br>
+                Les points d'amélioration identifiés dans le bilan hebdomadaire déterminent si le Run 3 sera un fractionné (combler manque intensité) ou une récupération (gérer fatigue).
+            </div>
+        </div>
+
+        <a href="/" class="btn-back">← Retour au Dashboard</a>
+    </div>
+</body>
+</html>

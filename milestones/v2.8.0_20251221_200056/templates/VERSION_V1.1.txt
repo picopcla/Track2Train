@@ -1,0 +1,38 @@
+VERSION V1.1 - STABLE
+=====================
+
+Date: 8 novembre 2025 - 20h10
+
+CARACTÉRISTIQUES:
+-----------------
+✅ Bibliothèque: ApexCharts (pas Chart.js)
+✅ 3 graphiques synchronisés (group: 'activity-sync')
+   - FC: Courbe rouge (type: 'line')
+   - Allure: Courbe verte stepline (type: 'line', curve: 'stepline')
+   - Élévation: Zone terrain (type: 'area')
+
+✅ Sparklines:
+   - Efficacité cardio (k_moy) - violet
+   - Dérive cardio - orange
+   - Filtrés par type_sortie (20 derniers du même type)
+
+✅ Layout:
+   - Grille 2x2 avec allure en quinconce à droite
+   - Stats: Distance, Cadence, Temps, Dénivelé
+   - Allure grande: 2.5rem à droite du grid
+
+✅ Comparaisons:
+   - vs moyenne des 20 derniers runs du même type
+   - Format: ↗ +12% vs moy, → Similaire, ↘ -8% vs moy
+
+✅ Toolbar ApexCharts:
+   - Zoom/Pan synchronisés
+   - Download, Selection, Reset
+
+FICHIER:
+--------
+/opt/app/Track2Train-staging/templates/index.html.V1.1-stable
+
+RESTAURATION:
+-------------
+cp /opt/app/Track2Train-staging/templates/index.html.V1.1-stable /opt/app/Track2Train-staging/templates/index.html

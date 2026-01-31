@@ -1,0 +1,89 @@
+{
+  "week_number": 51,
+  "start_date": "2025-12-15",
+  "end_date": "2025-12-21",
+  "generated_at": "2025-12-14T12:00:00.000000",
+  "runs": [
+    {
+      "day": "Lundi",
+      "day_date": "2025-12-15",
+      "type": "recuperation",
+      "type_display": "Récupération",
+      "distance_km": 5.5,
+      "pace_target": "5:48/km",
+      "fc_target": "125-135 bpm",
+      "fc_target_min": 125,
+      "fc_target_max": 135,
+      "predicted_time": "00:31:58",
+      "zones_target": [
+        1,
+        2
+      ],
+      "k_target": 4.94,
+      "drift_target": 6.6,
+      "notes": "Relâchement total, endurance de base."
+    },
+    {
+      "day": "Mercredi",
+      "day_date": "2025-12-17",
+      "type": "tempo_leger",
+      "type_display": "Tempo Léger",
+      "distance_km": 6.0,
+      "pace_target": "5:24/km",
+      "fc_target": "135-145 bpm",
+      "fc_target_min": 135,
+      "fc_target_max": 145,
+      "predicted_time": "00:32:27",
+      "zones_target": [
+        2,
+        3
+      ],
+      "k_target": 5.59,
+      "drift_target": 8.4,
+      "notes": "Allure confortable, zone tempo."
+    },
+    {
+      "day": "Vendredi",
+      "day_date": "2025-12-19",
+      "type": "recuperation",
+      "type_display": "Récupération",
+      "distance_km": 5.5,
+      "pace_target": "5:53/km",
+      "fc_target": "125-135 bpm",
+      "fc_target_min": 125,
+      "fc_target_max": 135,
+      "predicted_time": "00:32:26",
+      "zones_target": [
+        1,
+        2
+      ],
+      "k_target": 4.94,
+      "drift_target": 6.6,
+      "notes": "Récupération pré-long run."
+    },
+    {
+      "day": "Dimanche",
+      "day_date": "2025-12-21",
+      "type": "long_run",
+      "type_display": "Long Run",
+      "distance_km": 12.0,
+      "pace_target": "5:37/km",
+      "fc_target": "130-140 bpm",
+      "fc_target_min": 130,
+      "fc_target_max": 140,
+      "predicted_time": "01:07:31",
+      "zones_target": [
+        2,
+        3
+      ],
+      "k_target": 5.2,
+      "drift_target": 14.1,
+      "notes": "Sortie longue endurance."
+    }
+  ],
+  "summary": {
+    "total_distance": 29.0,
+    "total_time_predicted": "02:44",
+    "balance": "Pattern semi-marathon: récup → tempo → récup → long run"
+  }
+}

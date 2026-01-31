@@ -1,0 +1,352 @@
+{
+  "title": "Recommandations d'éléments à ajouter au Dashboard",
+  "priority": "Santé cardiaque et progression durable pour homme 52 ans",
+
+  "critical_alerts": {
+    "description": "Alertes à afficher en haut de page si dépassement de seuils",
+    "elements": [
+      {
+        "name": "Alerte Dérive Cardio",
+        "condition": "deriv_cardio > 1.25",
+        "message": "🔴 ALERTE : Dérive cardio élevée ({{ deriv_cardio }}). Réduire l'intensité des prochaines sorties.",
+        "color": "red",
+        "action": "Conseiller de courir en Zone 2 (FC < 120 bpm)"
+      },
+      {
+        "name": "Alerte FC Max fréquente",
+        "condition": "fc_max > 160 bpm sur 2 courses consécutives",
+        "message": "⚠️ ATTENTION : FC max élevée ({{ fc_max }} bpm). Partir plus progressivement.",
+        "color": "orange",
+        "action": "Recommander départ à 110 bpm et montée progressive"
+      },
+      {
+        "name": "Temps excessif en Zone 4-5",
+        "condition": "time_in_zone_4_5 > 40%",
+        "message": "🟡 INFO : Tu passes {{ time_in_zone_4_5 }}% du temps en Zone 4-5. Objectif : < 20%",
+        "color": "yellow",
+        "action": "Encourager sorties en Zone 2"
+      }
+    ]
+  },
+
+  "new_indicators": {
+    "description": "Nouveaux indicateurs à calculer et afficher",
+    "items": [
+      {
+        "name": "Score de Dérive Cardio",
+        "formula": "deriv_cardio = (FC_dernier_tiers / FC_premier_tiers)",
+        "thresholds": {
+          "excellent": "< 1.05",
+          "bon": "1.05 - 1.15",
+          "attention": "1.15 - 1.25",
+          "alerte": "> 1.25"
+        },
+        "display": "Grosse jauge colorée avec emoji (🟢🟡🟠🔴)",
+        "explanation": "Plus important que k_moy pour détecter les sorties trop intenses",
+        "priority": "CRITIQUE"
+      },
+      {
+        "name": "Variabilité FC intra-course",
+        "formula": "((FC_max - FC_min) / FC_min) * 100",
+        "thresholds": {
+          "excellent": "< 15%",
+          "moyen": "15% - 25%",
+          "mauvais": "> 25%"
+        },
+        "display": "Petit graphique sparkline montrant l'évolution de la FC",
+        "explanation": "Détecte les départs trop brutaux (ex: +31% sur dernière course)",
+        "priority": "HAUTE"
+      },
+      {
+        "name": "Temps passé par Zone FC",
+        "formula": "Pourcentage du temps dans chaque zone (Z1 à Z5)",
+        "zones": {
+          "Z1": "50-60% FC max (84-101 bpm) - Récupération",
+          "Z2": "60-70% FC max (101-117 bpm) - Endurance 🎯",
+          "Z3": "70-80% FC max (117-134 bpm) - Tempo",
+          "Z4": "80-90% FC max (134-151 bpm) - Seuil",
+          "Z5": "90-100% FC max (151-168 bpm) - Max ⚠️"
+        },
+        "target": "Z2 ≥ 60%, Z3 20-30%, Z4+Z5 < 10%",
+        "display": "Graphique en barres horizontales empilées",
+        "priority": "HAUTE"
+      },
+      {
+        "name": "Allure en Zone 2 (Decoupling)",
+        "formula": "Allure moyenne quand FC est dans Zone 2 (101-117 bpm)",
+        "display": "Graphique ligne sur les 20 dernières courses",
+        "explanation": "Si l'allure en Z2 s'améliore = PROGRESSION aérobie",
+        "target": "Voir l'allure en Z2 diminuer (courir plus vite à même FC)",
+        "priority": "MOYENNE"
+      },
+      {
+        "name": "FC au repos (FC repos)",
+        "formula": "FC mesurée au réveil avant de se lever",
+        "source": "Données Strava (si disponibles) ou saisie manuelle",
+        "thresholds": {
+          "excellent": "< 50 bpm",
+          "bon": "50-60 bpm",
+          "attention": "> 60 bpm"
+        },
+        "display": "Graphique ligne sur 30 jours",
+        "explanation": "Une FC repos qui augmente = fatigue/surentraînement",
+        "priority": "MOYENNE"
+      },
+      {
+        "name": "Ratio FC/Allure (Efficacité instantanée)",
+        "formula": "FC_moyenne / Allure_moy (bpm par min/km)",
+        "explanation": "Plus le ratio est bas, plus tu es efficient",
+        "display": "Graphique sur 20 dernières courses",
+        "target": "Ratio qui diminue = amélioration de l'efficacité",
+        "priority": "BASSE"
+      }
+    ]
+  },
+
+  "dashboard_sections": {
+    "description": "Organisation recommandée du dashboard",
+    "sections": [
+      {
+        "section": "1. ALERTES (en haut)",
+        "content": [
+          "Alerte Dérive Cardio si > 1.25",
+          "Alerte FC Max si > 160 bpm sur 2 courses",
+          "Alerte temps en Z4-Z5 si > 40%"
+        ],
+        "style": "Bandeau coloré (rouge/orange/jaune) collapsible"
+      },
+      {
+        "section": "2. COACHING MESSAGE",
+        "content": [
+          "Message personnalisé chaleureux (voir COACHING_MESSAGE_UI.txt)",
+          "Conseil du jour basé sur la dernière course",
+          "Encouragement"
+        ],
+        "style": "Card avec emoji, fond clair, texte lisible"
+      },
+      {
+        "section": "3. INDICATEURS CLÉS (cards)",
+        "content": [
+          "Score Dérive Cardio (grosse jauge)",
+          "k_moy avec sparkline (déjà présent ✅)",
+          "Temps par Zone FC (graphique barres)",
+          "Variabilité FC (pourcentage)"
+        ],
+        "style": "Grid 2x2, cards colorées selon seuils"
+      },
+      {
+        "section": "4. GRAPHIQUES DÉTAILLÉS",
+        "content": [
+          "Graphiques synchronisés (FC, Allure, Élévation) ✅ DÉJÀ PRÉSENT",
+          "NOUVEAU : Overlay zones FC sur graphique FC (couleurs de fond)",
+          "NOUVEAU : Annotation \"Dérive cardio\" sur graphique FC"
+        ],
+        "style": "Graphiques ApexCharts avec zones colorées"
+      },
+      {
+        "section": "5. ÉVOLUTIONS (tendances)",
+        "content": [
+          "Graphique ligne : Dérive cardio sur 20 courses",
+          "Graphique ligne : k_moy sur 20 courses",
+          "Graphique ligne : Allure en Z2 sur 20 courses",
+          "Graphique ligne : FC repos sur 30 jours (si disponible)"
+        ],
+        "style": "4 petits graphiques ApexCharts en grid"
+      },
+      {
+        "section": "6. PRÉDICTIONS",
+        "content": [
+          "Objectif 10 km : Date estimée + temps prédit",
+          "Objectif Semi : Date estimée + temps prédit",
+          "Conditions : Respect des zones FC"
+        ],
+        "style": "Card avec icônes 🎯 et timeline"
+      },
+      {
+        "section": "7. HISTORIQUE (déjà présent)",
+        "content": [
+          "Tableau des dernières courses ✅",
+          "Graphiques k et dérive cardio ✅"
+        ]
+      }
+    ]
+  },
+
+  "modifications_graphiques_existants": {
+    "description": "Améliorations des graphiques ApexCharts déjà présents",
+    "items": [
+      {
+        "graphique": "Graphique FC (rouge)",
+        "modifications": [
+          "Ajouter des zones de fond colorées selon la zone FC",
+          "Z1 (84-101): #e5f7e5 (vert très pâle)",
+          "Z2 (101-117): #c8f0c8 (vert pâle) 🎯 ZONE CIBLE",
+          "Z3 (117-134): #fff4cc (jaune pâle)",
+          "Z4 (134-151): #ffe5cc (orange pâle)",
+          "Z5 (151-168): #ffe0e0 (rouge pâle)",
+          "Ajouter une annotation horizontale à FC=120 bpm (limite Z2)",
+          "Afficher le % de temps passé dans chaque zone sur le tooltip"
+        ],
+        "exemple_code": "annotations: { yaxis: [ { y: 101, y2: 117, fillColor: '#c8f0c8', label: { text: 'Zone 2 - Cible' } } ] }"
+      },
+      {
+        "graphique": "Graphique Allure (vert foncé)",
+        "modifications": [
+          "Ajouter une ligne horizontale à 6:00/km (allure Z2 recommandée)",
+          "Ajouter une zone de fond verte pâle entre 6:00 et 6:30/km (plage Z2)",
+          "Afficher en tooltip : 'Cette allure correspond à Zone X'"
+        ]
+      },
+      {
+        "graphique": "Sparklines (k_moy et dérive)",
+        "modifications": [
+          "Ajouter une ligne de seuil horizontal (k=6.5 pour k_moy, dérive=1.15 pour dérive)",
+          "Colorer les points au-dessus/en-dessous du seuil (vert/rouge)",
+          "Afficher la tendance (↗ en amélioration, → stable, ↘ en dégradation)"
+        ]
+      }
+    ]
+  },
+
+  "calculs_backend": {
+    "description": "Calculs à ajouter dans app.py",
+    "fonctions": [
+      {
+        "nom": "calculate_zone_distribution",
+        "input": "points (liste avec 'hr')",
+        "output": {
+          "zone_1_pct": "float",
+          "zone_2_pct": "float",
+          "zone_3_pct": "float",
+          "zone_4_pct": "float",
+          "zone_5_pct": "float"
+        },
+        "formule": "Pour chaque point, déterminer la zone selon FC, puis % du temps total",
+        "zones": {
+          "zone_1": "84-101 bpm",
+          "zone_2": "101-117 bpm",
+          "zone_3": "117-134 bpm",
+          "zone_4": "134-151 bpm",
+          "zone_5": "151-168 bpm"
+        }
+      },
+      {
+        "nom": "calculate_fc_variability",
+        "input": "points (liste avec 'hr')",
+        "output": "float (pourcentage)",
+        "formule": "((max(hr) - min(hr)) / min(hr)) * 100"
+      },
+      {
+        "nom": "calculate_allure_in_zone2",
+        "input": "points (liste avec 'hr' et 'vel')",
+        "output": "float (allure moyenne en min/km)",
+        "formule": "Filtrer points où 101 <= hr <= 117, puis calculer allure moyenne",
+        "explication": "Permet de suivre la progression aérobie"
+      },
+      {
+        "nom": "detect_early_effort_spike",
+        "input": "points (liste avec 'hr')",
+        "output": "boolean (true si départ trop brutal)",
+        "formule": "Si FC augmente > 15% dans le premier tiers de la course",
+        "action": "Afficher alerte 'Départ trop rapide détecté'"
+      },
+      {
+        "nom": "predict_10k_time",
+        "input": "k_moy, deriv_cardio, fc_z2_avg",
+        "output": {
+          "time_estimate": "string (mm:ss)",
+          "readiness": "string (Prêt / Pas encore prêt)",
+          "conditions": "string (explications)"
+        },
+        "formule": "Basé sur allure en Z2 actuelle et k_moy. Si deriv < 1.15 et k > 6.5, prévoir 10k en Z2-Z3"
+      },
+      {
+        "nom": "predict_semi_readiness",
+        "input": "sorties_longues_z2 (distances max en Z2), k_moy, deriv_cardio",
+        "output": {
+          "ready_in_months": "int",
+          "current_readiness": "string (0-100%)",
+          "next_milestone": "string"
+        },
+        "formule": "Prêt si : sortie longue ≥ 18 km en Z2, k_moy > 7, deriv < 1.15 sur 15 km"
+      }
+    ]
+  },
+
+  "data_enrichment": {
+    "description": "Données supplémentaires à stocker dans activities.json",
+    "nouveaux_champs": [
+      {
+        "field": "zone_distribution",
+        "type": "object",
+        "content": {
+          "zone_1_pct": "float",
+          "zone_2_pct": "float",
+          "zone_3_pct": "float",
+          "zone_4_pct": "float",
+          "zone_5_pct": "float"
+        },
+        "calcul": "Dans enrich_activities()"
+      },
+      {
+        "field": "fc_variability_pct",
+        "type": "float",
+        "content": "Pourcentage de variation FC (ex: 31.3 pour dernière course)",
+        "calcul": "Dans enrich_activities()"
+      },
+      {
+        "field": "allure_in_zone2",
+        "type": "float",
+        "content": "Allure moyenne quand FC en Zone 2 (en min/km)",
+        "calcul": "Dans enrich_activities()"
+      },
+      {
+        "field": "early_spike_detected",
+        "type": "boolean",
+        "content": "true si départ trop brutal (FC +15% premier tiers)",
+        "calcul": "Dans enrich_activities()"
+      },
+      {
+        "field": "coaching_alert",
+        "type": "string",
+        "content": "Message d'alerte si seuils dépassés (ex: 'Dérive trop élevée')",
+        "calcul": "Dans enrich_activities()"
+      }
+    ]
+  },
+
+  "ui_recommendations": {
+    "description": "Recommandations d'interface utilisateur",
+    "principes": [
+      "🎯 Priorité : Santé cardiaque avant performance",
+      "💚 Encourager les sorties en Zone 2 (feedback positif)",
+      "🔴 Alerter clairement si dérive > 1.25 ou temps en Z4-5 > 40%",
+      "📊 Visualiser l'évolution sur le long terme (graphiques tendances)",
+      "💬 Langage chaleureux et bienveillant (coach, pas juge)",
+      "📱 Mobile-first : indicateurs lisibles sur petit écran"
+    ],
+    "couleurs": {
+      "zone_2_vert": "#4ade80",
+      "alerte_orange": "#fb923c",
+      "alerte_rouge": "#ef4444",
+      "info_bleu": "#60a5fa",
+      "excellent_vert_fonce": "#16a34a"
+    },
+    "emojis": {
+      "excellent": "🟢",
+      "bon": "🟡",
+      "attention": "🟠",
+      "alerte": "🔴",
+      "progression": "📈",
+      "objectif": "🎯",
+      "conseil": "💡",
+      "sante": "🏥"
+    }
+  },
+
+  "exemple_message_alerte": {
+    "condition": "deriv_cardio > 1.30",
+    "html": "<div class='alert-box alert-red'>\n  <div class='alert-icon'>🔴</div>\n  <div class='alert-content'>\n    <h3>Alerte Dérive Cardio</h3>\n    <p>Ta dernière sortie montre une <strong>dérive de 1.33</strong> avec une FC qui augmente de <strong>+31%</strong>.</p>\n    <p>🎯 <strong>Conseil immédiat :</strong> Pars plus progressivement à ta prochaine sortie (110 bpm). L'objectif est de rester en dessous de 120 bpm pendant les 2 premiers km.</p>\n    <p>💡 Rappel : À 52 ans, 80% de tes sorties doivent être en Zone 2 (FC < 120 bpm) pour construire une vraie endurance.</p>\n  </div>\n</div>",
+    "style": "background: #fee; border-left: 4px solid #f44; padding: 1rem; border-radius: 8px; margin: 1rem 0;"
+  }
+}

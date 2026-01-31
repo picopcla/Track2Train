@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Track2Train - Dashboard</title>
+<link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}" type="image/png">
+<style>
+    body { font-family: Arial, sans-serif; background:#f5f5f5; }
+    .container { max-width:700px; margin:2rem auto; background:white; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); padding:2rem; }
+
+    /* Header corrigé pour éviter superposition */
+    .header {
+        background-color: #ef4423;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-align: left;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem 1rem;
+    }
+    .header-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        flex: 1 1 60%;
+        min-width: 180px;
+    }
+    .header-left h1 {
+        color: white;
+        margin: 0;
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .header-left img {
+        height: 50px;
+    }
+    .header-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem 1.5rem;
+        font-weight: bold;
+        color: white;
+        font-size: 0.9rem;
+    }
+    .header-info p {
+        margin: 0;
+        white-space: nowrap;
+    }
+    .header-right {
+        color: white;
+        font-size: 1.1rem;
+        font-weight: bold;
+        flex: 1 1 30%;
+        min-width: 120px;
+        text-align: right;
+        white-space: nowrap;
+    }
+    /* Ajout style pour l’emoji météo */
+    .header-right span.weather-emoji {
+        font-size: 1.8rem;
+        display: inline-block;
+        margin-top: 0.2rem;
+    }
+    .powered {
+        flex-basis: 100%;
+        font-size: 0.7rem;
+        color: white;
+        text-align: center;
+        margin-top: 0.3rem;
+    }
+
+    /* Responsive simplifié */
+    @media (max-width: 600px) {
+        .header-left, .header-right {
+            flex: 1 1 100%;
+            text-align: center;
+        }
+        .header-right {
+            margin-top: 0.3rem;
+        }
+        .header-info {
+            justify-content: center;
+        }
+    }
+
+    /* Le reste de ton CSS existant */
+    .type-coaching {
+        color: white; 
+        font-weight: bold; 
+        font-size: 1rem; 
+        margin: 0.7rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .type-coaching .date {
+        font-weight: normal;
+        font-size: 0.9rem;
+    }
+    .objectives, .short-term-comment { background-color: #f47a50; color: white; font-weight: bold; font-size: 0.9rem; text-align: center; border-radius: 6px; padding: 0.3rem; margin: 0.5rem 0; }
+    .short-term-comment { background-color: #eee; color: #333; font-style: italic; }
+    .next-runs table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .next-runs th, .next-runs td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .next-runs th { background: #f47a50; color: white; }
+    .sub-header { background-color: #f47a50; padding: 0.2rem 0.8rem; border-radius: 8px; text-align: center; margin: 2rem auto; }
+    .sub-header h2 { color: white; margin: 0; font-size: 1.2rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem 2rem; margin-top: 1rem; }
+    .stats-grid div { text-align: left; }
+    .stats-grid .value { font-size: 1rem; font-weight: bold; }
+    .stats-grid small { display: block; font-size: 0.7rem; color: #666; }
+    .chart-container { width:100%; height:400px; margin-top:2rem; }
+    .btn { display:block; width:100%; text-align:center; background:#007BFF; color:white; padding:10px; border-radius:5px; text-decoration:none; margin-top:1rem; }
+
+    /* CARROUSEL PRINCIPAL */
+    .carousel-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        background: #fff;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+    #mainCarouselSlides {
+        display: flex;
+        transition: transform 0.3s ease-in-out;
+        will-change: transform;
+    }
+    .carousel-slide {
+        min-width: 100%;
+        box-sizing: border-box;
+        padding: 0;
+        user-select: none;
+    }
+	.carousel-arrows {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 0.5rem 0 1rem 0; /* espace entre header et contenu */
+}
+
+	.carousel-arrows button {
+		background: #ef4423; /* fond orange */
+		border: none;
+		color: white; /* flèche blanche */
+		font-size: 2rem;
+		border-radius: 50%;
+		width: 50px;
+		height: 50px;
+		cursor: pointer;
+		transition: transform 0.2s;
+	}
+
+	.carousel-arrows button:hover {
+		transform: scale(1.2);
+	}
+
+</style>
+</head>
+<body>
+<div class="container">
+
+    <!-- CARROUSEL PRINCIPAL -->
+    {% if activities_for_carousel %}
+	<div class="carousel-container" aria-label="Carrousel des activités">
+
+		<!-- ✅ Flèches sous le header -->
+		<div class="carousel-arrows">
+			<button id="mainPrevBtn" aria-label="Activité précédente">‹</button>
+			<button id="mainNextBtn" aria-label="Activité suivante">›</button>
+		</div>
+
+		<div id="mainCarouselSlides">
+			{% for act in activities_for_carousel %}
+            <div class="carousel-slide" role="group" aria-roledescription="slide" aria-label="Activité {{ loop.index }} sur {{ activities_for_carousel|length }}">
+                <div class="header">
+                    <div class="header-left">
+                        <h1>
+                            <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="Track2Train">
+                            Track2Train
+                        </h1>
+			<div class="header-info">
+				<p>
+					Type : {{ act.type_sortie }}
+					{% if act.is_fractionne %}
+						— <span style="color:yellow;">Fractionné ✅ ({{ (act.fractionne_prob * 100)|round(1) }}%)</span>
+					{% else %}
+						— <span style="color:lightgray;">Non fractionné</span>
+					{% endif %}
+				</p>
+				<p>Date : {{ act.date }}</p>
+			</div>
+                    </div>
+                    <div class="header-right">
+                        {% if act.temperature is not none %}
+                            Température : {{ act.temperature }}°C
+                            <br />
+                            <span class="weather-emoji">{{ act.weather_emoji }}</span>
+                        {% else %}
+                            Température : N/A
+                        {% endif %}
+                    </div>
+                    <div class="powered">powered by OpenAI</div>
+                </div>
+
+                <div class="type-coaching">
+                    <div>Ton coaching de : {{ act.type_sortie }}</div>
+                    <div class="date">le {{ act.date }}</div>
+                </div>
+
+                <div class="sub-header">
+                    <h2>Détails du dernier run</h2>
+                </div>
+
+                <!-- Layout combiné : Grille 2x2 + Allure en quinconce -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; grid-template-rows: auto auto; gap: 0.8rem; margin: 0 0 1rem 0; align-items: center;">
+                    <!-- Haut gauche : Distance -->
+                    <div style="padding: 0.5rem; text-align: center; background: #f9fafb; border-radius: 6px;">
+                        <small style="color: #666; font-size: 0.75rem;">Distance</small>
+                        <div class="value" style="font-size: 1.2rem; font-weight: bold;">{{ act.distance_km }} km</div>
+                    </div>
+
+                    <!-- Haut centre : Cadence -->
+                    <div style="padding: 0.5rem; text-align: center; background: #f9fafb; border-radius: 6px;">
+                        <small style="color: #666; font-size: 0.75rem;">Cadence moy</small>
+                        <div class="value" style="font-size: 1.2rem; font-weight: bold;">{{ act.cad_mean_spm }}<span class="unit">spm</span></div>
+                    </div>
+
+                    <!-- Allure en quinconce à droite (span 2 lignes) -->
+                    <div style="grid-row: 1 / 3; background: #f0f9ff; border-radius: 8px; padding: 0.6rem 1.2rem; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-left: 1rem;">
+                        <small style="color: #666; font-size: 0.7rem; margin-bottom: 0.2rem;">Allure</small>
+                        <div style="font-size: 2.5rem; font-weight: bold; color: #1f2937; line-height: 1;">{{ act.allure }}</div>
+                        <small style="color: #9ca3af; font-size: 0.65rem;">/km</small>
+                    </div>
+
+                    <!-- Bas gauche : Temps -->
+                    <div style="padding: 0.5rem; text-align: center; background: #f9fafb; border-radius: 6px;">
+                        <small style="color: #666; font-size: 0.75rem;">Temps</small>
+                        <div class="value" style="font-size: 1.2rem; font-weight: bold;">{{ act.duration_mmss }}</div>
+                    </div>
+
+                    <!-- Bas centre : Dénivelé -->
+                    <div style="padding: 0.5rem; text-align: center; background: #f9fafb; border-radius: 6px;">
+                        <small style="color: #666; font-size: 0.75rem;">Dénivelé</small>
+                        <div class="value" style="font-size: 1.2rem; font-weight: bold;">{{ act.gain_alt }} m</div>
+                    </div>
+                </div>
+
+                <!-- Cards Indicateurs Comparatifs -->
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 1rem 0;">
+                    <!-- Card Efficacité Cardiaque -->
+                    <div style="background: #f0f9ff; border-left: 4px solid #775DD0; padding: 0.8rem; border-radius: 8px;">
+                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.3rem;">Efficacité Cardio</div>
+                        <div style="display: flex; gap: 0.3rem; align-items: center;">
+                            <div style="flex-shrink: 0;">
+                                <div style="font-size: 1.3rem; font-weight: bold; color: #775DD0;">
+                                    {{ act.k_moy if act.k_moy != '-' else 'N/A' }}
+                                </div>
+                                <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.2rem;">
+                                    {{ act.k_comparison }}
+                                </div>
+                            </div>
+                            <div id="sparkK{{ loop.index0 }}" style="flex-grow: 1; height: 50px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Card Dérive Cardio -->
+                    <div style="background: #fff7ed; border-left: 4px solid #FF9800; padding: 0.8rem; border-radius: 8px;">
+                        <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.3rem;">Dérive Cardio</div>
+                        <div style="display: flex; gap: 0.3rem; align-items: center;">
+                            <div style="flex-shrink: 0;">
+                                <div style="font-size: 1.3rem; font-weight: bold; color: #FF9800;">
+                                    {{ act.deriv_cardio if act.deriv_cardio and act.deriv_cardio != '-' else 'N/A' }}
+                                </div>
+                                <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.2rem;">
+                                    {{ act.drift_comparison }}
+                                </div>
+                            </div>
+                            <div id="sparkDrift{{ loop.index0 }}" style="flex-grow: 1; height: 50px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sub-header">
+                    <h2>FC, Allure et Terrain</h2>
+                </div>
+
+                <!-- FC Moyenne et Max (style épuré) -->
+                <div style="display: flex; gap: 2rem; margin: 0.5rem 0 0.3rem 0; font-size: 0.9rem; color: #666;">
+                    <span>FC moyenne : <strong style="color: #1f2937;">{{ act.fc_moy }} bpm</strong></span>
+                    <span>FC max : <strong style="color: #1f2937;">{{ act.fc_max }} bpm</strong></span>
+                </div>
+
+                <div style="margin-top: 0rem;">
+                    <div id="chartFC{{ loop.index0 }}"></div>
+                    <div id="chartAllure{{ loop.index0 }}" style="margin-top: 0px;"></div>
+                    <div id="chartElevation{{ loop.index0 }}" style="margin-top: 0px;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    <!-- FIN CARROUSEL PRINCIPAL -->
+
+    <!-- Commentaire court terme -->
+    {% if short_term and short_term.commentaire %}
+    <div class="short-term-comment">
+        📝 {{ short_term.commentaire }}
+    </div>
+    {% endif %}
+
+    <!-- Prochains runs (tableau) -->
+    {% if short_term and short_term.prochains_runs %}
+    <div class="next-runs">
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Distance (km)</th>
+                    <th>Allure cible</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for run in short_term.prochains_runs %}
+                <tr>
+                    <td>{{ run.type }}</td>
+                    <td>{{ run.distance }}</td>
+                    <td>{{ run.allure }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <a class="btn" href="/profile">⚙️ Profil & Événements</a>
+    <a class="btn" href="/generate_short_term_plan">🔄 Recalculer coaching court terme</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+// Fonction utilitaire pour convertir les minutes décimales en format mm:ss
+function formatPace(minutesDecimal) {
+    const minutes = Math.floor(minutesDecimal);
+    const seconds = Math.round((minutesDecimal - minutes) * 60);
+    const formattedSeconds = seconds < 10 ? '0' + seconds : seconds;
+    return `${minutes}:${formattedSeconds}`;
+}
+
+// CARROUSEL PRINCIPAL
+(function(){
+    const carousel = document.getElementById('mainCarouselSlides');
+    if(!carousel) return;
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const prevBtn = document.getElementById('mainPrevBtn');
+    const nextBtn = document.getElementById('mainNextBtn');
+    const totalSlides = slides.length;
+    let currentIndex = 0;
+
+    function updateCarousel() {
+        carousel.style.transform = `translateX(${-currentIndex * 100}%)`;
+    }
+
+	// Flèche gauche → activité précédente
+	prevBtn.addEventListener('click', () => {
+		currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+		updateCarousel();
+	});
+
+	// Flèche droite → activité suivante
+	nextBtn.addEventListener('click', () => {
+		currentIndex = (currentIndex + 1) % totalSlides;
+		updateCarousel();
+	});
+
+
+    // Swipe support mobile (éviter les conflits avec les graphiques)
+	let startX = 0;
+	let startY = 0;
+	let isDragging = false;
+	let isOnChart = false;
+
+	carousel.addEventListener('touchstart', (e) => {
+		// Vérifier si le touch commence sur un graphique
+		const target = e.target;
+		isOnChart = target.closest('.chart-container') || target.closest('.apexcharts-canvas');
+
+		if (!isOnChart) {
+			startX = e.touches[0].clientX;
+			startY = e.touches[0].clientY;
+			isDragging = true;
+		}
+	});
+
+	carousel.addEventListener('touchmove', (e) => {
+		// Si on est sur un graphique, ne pas bloquer le scroll/zoom
+		if (isOnChart) return;
+
+		// Empêcher le scroll vertical si on est en train de swiper horizontalement
+		if (isDragging) {
+			const currentX = e.touches[0].clientX;
+			const currentY = e.touches[0].clientY;
+			const diffX = Math.abs(currentX - startX);
+			const diffY = Math.abs(currentY - startY);
+
+			if (diffX > diffY && diffX > 10) {
+				e.preventDefault();
+			}
+		}
+	}, { passive: false });
+
+	carousel.addEventListener('touchend', (e) => {
+		if (!isDragging || isOnChart) {
+			isDragging = false;
+			isOnChart = false;
+			return;
+		}
+
+		const endX = e.changedTouches[0].clientX;
+		const diffX = endX - startX;
+
+		if (diffX > 50) {
+			// Swipe vers la droite → activité précédente
+			currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+			updateCarousel();
+		} else if (diffX < -50) {
+			// Swipe vers la gauche → activité suivante
+			currentIndex = (currentIndex + 1) % totalSlides;
+			updateCarousel();
+		}
+		isDragging = false;
+		isOnChart = false;
+	});
+
+    updateCarousel();
+
+    // Création des graphiques ApexCharts pour chaque slide
+    {% for act in activities_for_carousel %}
+    {
+        const labels{{ loop.index0 }} = {{ act.labels | safe }};
+        const fc{{ loop.index0 }} = {{ act.points_fc | safe }};
+        const allure{{ loop.index0 }} = {{ act.allure_curve | safe }};
+        const elevationData{{ loop.index0 }} = {{ act.points_alt | safe }};
+        const minElevation{{ loop.index0 }} = elevationData{{ loop.index0 }}.length > 0 ? Math.min(...elevationData{{ loop.index0 }}) : 0;
+        const maxElevation{{ loop.index0 }} = elevationData{{ loop.index0 }}.length > 0 ? Math.max(...elevationData{{ loop.index0 }}) : 100;
+
+        // Calculer la distance max et déterminer l'intervalle optimal
+        const maxDistance{{ loop.index0 }} = labels{{ loop.index0 }}.length > 0 ? Math.max(...labels{{ loop.index0 }}) : 10;
+        const tickInterval{{ loop.index0 }} = maxDistance{{ loop.index0 }} < 5 ? 0.5 : 1;
+        const tickAmount{{ loop.index0 }} = Math.floor(maxDistance{{ loop.index0 }} / tickInterval{{ loop.index0 }});
+
+        const fcMax{{ loop.index0 }} = fc{{ loop.index0 }}.length > 0 ? Math.max(...fc{{ loop.index0 }}) : 180;
+        const allureMax{{ loop.index0 }} = allure{{ loop.index0 }}.length > 0 ? Math.max(...allure{{ loop.index0 }}) : 8;
+
+        // ==================== GRAPHIQUE 1: FC avec zones cardiaques ====================
+
+        const fcMin{{ loop.index0 }} = fc{{ loop.index0 }}.length > 0 ? Math.min(...fc{{ loop.index0 }}) : 100;
+        const z1{{ loop.index0 }} = Math.round(fcMax{{ loop.index0 }} * 0.6);
+        const z2{{ loop.index0 }} = Math.round(fcMax{{ loop.index0 }} * 0.7);
+        const z3{{ loop.index0 }} = Math.round(fcMax{{ loop.index0 }} * 0.8);
+        const z4{{ loop.index0 }} = Math.round(fcMax{{ loop.index0 }} * 0.9);
+
+        const optionsFC{{ loop.index0 }} = {
+            series: [{
+                name: 'FC',
+                data: fc{{ loop.index0 }}.map((val, idx) => ({
+                    x: labels{{ loop.index0 }}[idx],
+                    y: val
+                }))
+            }],
+            chart: {
+                height: 180,
+                type: 'line',
+                group: 'activity-sync',
+                id: 'chartFC{{ loop.index0 }}',
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                },
+                zoom: { enabled: true },
+                offsetY: 0,
+                parentHeightOffset: 0
+            },
+            stroke: {
+                width: 2,
+                curve: 'smooth'
+            },
+            colors: ['#ef4444'],
+            xaxis: {
+                type: 'numeric',
+                decimalsInFloat: 1,
+                min: 0,
+                max: maxDistance{{ loop.index0 }},
+                labels: {
+                    show: true,
+                    style: { fontSize: '12px' },
+                    formatter: v => v ? v.toFixed(1) : ''
+                }
+            },
+            yaxis: {
+                min: Math.floor(fcMin{{ loop.index0 }} * 0.92),
+                max: Math.ceil(fcMax{{ loop.index0 }} * 1.02),
+                tickAmount: 4,
+                labels: {
+                    style: {
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        colors: '#1f2937'
+                    },
+                    formatter: function(val) { return Math.round(val); }
+                },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            annotations: {
+                yaxis: [
+                    {
+                        y: z4{{ loop.index0 }},
+                        y2: fcMax{{ loop.index0 }} * 1.1,
+                        fillColor: '#ef4444',
+                        opacity: 0.10
+                    },
+                    {
+                        y: z3{{ loop.index0 }},
+                        y2: z4{{ loop.index0 }},
+                        fillColor: '#f97316',
+                        opacity: 0.10
+                    },
+                    {
+                        y: z2{{ loop.index0 }},
+                        y2: z3{{ loop.index0 }},
+                        fillColor: '#facc15',
+                        opacity: 0.10
+                    },
+                    {
+                        y: z1{{ loop.index0 }},
+                        y2: z2{{ loop.index0 }},
+                        fillColor: '#22c55e',
+                        opacity: 0.10
+                    },
+                    {
+                        y: Math.floor(fcMin{{ loop.index0 }} * 0.90),
+                        y2: z1{{ loop.index0 }},
+                        fillColor: '#3b82f6',
+                        opacity: 0.10
+                    }
+                ]
+            },
+            legend: { show: false },
+            tooltip: {
+                y: { formatter: function(val) { return Math.round(val) + ' bpm'; } }
+            },
+            grid: {
+                borderColor: '#f1f1f1',
+                padding: {
+                    top: -5,
+                    bottom: 10,
+                    left: 0,
+                    right: 0
+                }
+            }
+        };
+
+        // ==================== GRAPHIQUE 2: Allure (courbe verte) ====================
+
+        const allureCible = 5.33; // 5:20 en décimal
+        const allureMin = 4.25; // Plancher fixe à 4:15/km
+        const allureMaxDynamic = Math.min(7.0, Math.ceil(Math.max(...allure{{ loop.index0 }}) * 1.08));
+
+        const optionsAllure{{ loop.index0 }} = {
+            series: [{
+                name: 'Allure',
+                data: allure{{ loop.index0 }}.map((val, idx) => ({
+                    x: labels{{ loop.index0 }}[idx],
+                    y: val
+                }))
+            }],
+            chart: {
+                height: 180,
+                type: 'line',
+                group: 'activity-sync',
+                id: 'chartAllure{{ loop.index0 }}',
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                },
+                zoom: { enabled: true },
+                offsetY: 0,
+                parentHeightOffset: 0
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                width: 2,
+                curve: 'stepline',
+                colors: ['#22c55e']
+            },
+            colors: ['#22c55e'],
+            fill: {
+                type: 'solid',
+                opacity: 0.3
+            },
+            xaxis: {
+                type: 'numeric',
+                decimalsInFloat: 1,
+                min: 0,
+                max: maxDistance{{ loop.index0 }},
+                labels: {
+                    show: true,
+                    style: { fontSize: '12px' },
+                    formatter: v => v ? v.toFixed(1) : ''
+                }
+            },
+            yaxis: {
+                reversed: true,
+                min: allureMin,
+                max: allureMaxDynamic,
+                title: {
+                    text: 'Allure (min/km)',
+                    style: { fontSize: '11px', fontWeight: 600 }
+                },
+                labels: {
+                    style: { fontSize: '10px' },
+                    formatter: function(val) {
+                        const min = Math.floor(val);
+                        const sec = Math.round((val - min) * 60);
+                        return min + ':' + (sec < 10 ? '0' : '') + sec;
+                    }
+                }
+            },
+            annotations: {
+                yaxis: [
+                    // Ligne cible rouge 5:20
+                    {
+                        y: allureCible,
+                        borderColor: '#dc2626',
+                        strokeDashArray: 5,
+                        borderWidth: 2,
+                        label: {
+                            text: 'Cible 5:20',
+                            position: 'right',
+                            offsetX: 0,
+                            style: {
+                                color: '#fff',
+                                background: '#dc2626',
+                                fontSize: '10px',
+                                padding: { left: 5, right: 5, top: 2, bottom: 2 }
+                            }
+                        }
+                    }
+                ]
+            },
+            legend: { show: false },
+            tooltip: {
+                y: {
+                    formatter: function(val) {
+                        const min = Math.floor(val);
+                        const sec = Math.round((val - min) * 60);
+                        return min + ':' + (sec < 10 ? '0' : '') + sec + '/km';
+                    }
+                }
+            },
+            grid: {
+                borderColor: '#f1f1f1',
+                padding: {
+                    top: -5,
+                    bottom: 10,
+                    left: 0,
+                    right: 0
+                }
+            }
+        };
+
+        // ==================== GRAPHIQUE 3: Élévation avec altitude relative ====================
+
+        const altMin{{ loop.index0 }} = elevationData{{ loop.index0 }}.length > 0 ? Math.min(...elevationData{{ loop.index0 }}) : 0;
+        const altitudeRelative{{ loop.index0 }} = elevationData{{ loop.index0 }}.map(alt => alt - altMin{{ loop.index0 }});
+        const altRelMax{{ loop.index0 }} = Math.max(...altitudeRelative{{ loop.index0 }});
+
+        const optionsElevation{{ loop.index0 }} = {
+            series: [{
+                name: 'Élévation',
+                data: altitudeRelative{{ loop.index0 }}.map((val, idx) => ({
+                    x: labels{{ loop.index0 }}[idx],
+                    y: val
+                }))
+            }],
+            chart: {
+                height: 140,
+                type: 'area',
+                group: 'activity-sync',
+                id: 'chartElevation{{ loop.index0 }}',
+                toolbar: {
+                    show: true,
+                    tools: {
+                        download: true,
+                        selection: true,
+                        zoom: true,
+                        zoomin: true,
+                        zoomout: true,
+                        pan: true,
+                        reset: true
+                    }
+                },
+                zoom: { enabled: true },
+                offsetY: 0,
+                parentHeightOffset: 0
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 2,
+                colors: ['#654321']
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.7,
+                    opacityTo: 0.2,
+                    stops: [0, 100],
+                    colorStops: [
+                        { offset: 0, color: '#8b4513', opacity: 0.8 },
+                        { offset: 100, color: '#f5deb3', opacity: 0.3 }
+                    ]
+                }
+            },
+            xaxis: {
+                type: 'numeric',
+                decimalsInFloat: 1,
+                min: 0,
+                max: maxDistance{{ loop.index0 }},
+                title: {
+                    text: 'Distance (km)',
+                    style: { fontSize: '11px', fontWeight: 600 }
+                },
+                labels: {
+                    style: { fontSize: '12px' },
+                    formatter: function(val) {
+                        return val ? parseFloat(val).toFixed(1) : '';
+                    }
+                }
+            },
+            yaxis: {
+                min: 0,
+                max: Math.ceil(altRelMax{{ loop.index0 }} * 1.1),
+                title: {
+                    text: 'Dénivelé (m)',
+                    style: { fontSize: '11px', fontWeight: 600 }
+                },
+                labels: {
+                    style: { fontSize: '10px' },
+                    formatter: function(val) { return Math.round(val); }
+                }
+            },
+            legend: { show: false },
+            tooltip: {
+                y: { formatter: function(val) { return Math.round(val) + ' m'; } }
+            },
+            grid: {
+                borderColor: '#f1f1f1',
+                padding: {
+                    top: -5,
+                    bottom: 10,
+                    left: 0,
+                    right: 0
+                }
+            },
+            annotations: {}
+        };
+
+        // Rendre les 3 graphiques
+        const chartFC{{ loop.index0 }} = new ApexCharts(
+            document.querySelector('#chartFC{{ loop.index0 }}'),
+            optionsFC{{ loop.index0 }}
+        );
+        chartFC{{ loop.index0 }}.render();
+
+        const chartAllure{{ loop.index0 }} = new ApexCharts(
+            document.querySelector('#chartAllure{{ loop.index0 }}'),
+            optionsAllure{{ loop.index0 }}
+        );
+        chartAllure{{ loop.index0 }}.render();
+
+        const chartElevation{{ loop.index0 }} = new ApexCharts(
+            document.querySelector('#chartElevation{{ loop.index0 }}'),
+            optionsElevation{{ loop.index0 }}
+        );
+        chartElevation{{ loop.index0 }}.render();
+
+        // ==================== SPARKLINE: Mini-graphique Dérive Cardio ====================
+        {% if act.drift_history_last20 %}
+        const sparkDriftOptions{{ loop.index0 }} = {
+            series: [{
+                name: 'Dérive',
+                data: {{ act.drift_history_last20 | safe }}
+            }],
+            chart: {
+                type: 'area',
+                width: '100%',
+                height: 50,
+                sparkline: { enabled: true }
+            },
+            stroke: {
+                width: 3,
+                curve: 'smooth',
+                colors: ['#FF9800']
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'light',
+                    type: 'vertical',
+                    colors: ['#FF9800'],
+                    opacityFrom: 0.6,
+                    opacityTo: 0.1
+                }
+            },
+            tooltip: {
+                enabled: true,
+                fixed: {
+                    enabled: false
+                },
+                y: {
+                    formatter: function(val) {
+                        return val.toFixed(2);
+                    }
+                }
+            }
+        };
+        const sparkDrift{{ loop.index0 }} = new ApexCharts(
+            document.querySelector('#sparkDrift{{ loop.index0 }}'),
+            sparkDriftOptions{{ loop.index0 }}
+        );
+        sparkDrift{{ loop.index0 }}.render();
+        {% endif %}
+
+        // ==================== SPARKLINE: Mini-graphique Efficacité Cardio ====================
+        {% if act.k_history_last20 %}
+        const sparkKOptions{{ loop.index0 }} = {
+            series: [{
+                name: 'Efficacité',
+                data: {{ act.k_history_last20 | safe }}
+            }],
+            chart: {
+                type: 'area',
+                width: '100%',
+                height: 50,
+                sparkline: { enabled: true }
+            },
+            stroke: {
+                width: 3,
+                curve: 'smooth',
+                colors: ['#775DD0']
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'light',
+                    type: 'vertical',
+                    colors: ['#775DD0'],
+                    opacityFrom: 0.6,
+                    opacityTo: 0.1
+                }
+            },
+            tooltip: {
+                enabled: true,
+                fixed: {
+                    enabled: false
+                },
+                y: {
+                    formatter: function(val) {
+                        return val.toFixed(2);
+                    }
+                }
+            }
+        };
+        const sparkK{{ loop.index0 }} = new ApexCharts(
+            document.querySelector('#sparkK{{ loop.index0 }}'),
+            sparkKOptions{{ loop.index0 }}
+        );
+        sparkK{{ loop.index0 }}.render();
+        {% endif %}
+    }
+    {% endfor %}
+})();
+</script>
+</body>
+</html>

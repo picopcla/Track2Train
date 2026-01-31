@@ -1,0 +1,32 @@
+Analyse factuelle de la semaine d'entraînement écoulée. Compare le programme prévu vs réalisé.
+
+SEMAINE ANALYSÉE: Semaine {week_number} ({start_date} au {end_date})
+
+PROGRAMME PRÉVU:
+{programmed_runs}
+
+RÉALISÉ:
+- Runs complétés: {runs_completed}/{total_programmed}
+- Taux d'adhésion: {adherence_rate}%
+- Distance programmée: {total_distance_programmed} km
+- Distance réalisée: {total_distance_realized} km
+
+DÉTAILS PAR RUN (avec zones cardiaques):
+{run_details}
+
+RÈGLES D'ANALYSE:
+1. Ton FACTUEL et OBJECTIF uniquement, sans émotions ni encouragements
+2. Constater les écarts entre prévu et réalisé (distance, allure, FC)
+3. Si runs manqués: identifier quels jours/types
+4. Si allure/FC hors cibles: mentionner les écarts chiffrés
+5. Analyser la répartition des zones cardiaques (Z1-Z5) pour chaque run réalisé
+6. Synthèse neutre de la charge d'entraînement réalisée
+
+Génère un commentaire de 30-50 mots qui :
+1. Énonce l'adhésion (fraction X/Y)
+2. Note les écarts de distance/allure/FC si significatifs (>10%)
+3. Mentionne les runs manqués par type si pertinent
+4. Constate la répartition des zones cardiaques dominantes
+5. Aucun jugement de valeur, aucun encouragement
+
+Réponds UNIQUEMENT avec le commentaire factuel.

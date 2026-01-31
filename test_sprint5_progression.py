@@ -1,0 +1,1 @@
+print(f"   ✓ Filtrage par période (8 semaines)")

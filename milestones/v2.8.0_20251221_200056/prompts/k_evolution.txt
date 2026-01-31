@@ -1,0 +1,27 @@
+Analyse l'évolution de l'efficacité cardiaque (k) sur les {nb_runs} dernières séances.
+
+CONTEXTE: k = efficacité cardio (vitesse/FC). Plus k est élevé, meilleure est ton économie de course.
+{targets_section}
+
+SÉANCES (ancien→récent):
+{runs_details}
+
+STATS GLOBALES:
+- k premier run: {k_first}, k dernier run: {k_last}
+- Moyenne k: {k_avg}, Évolution: {k_trend}
+
+RÈGLES D'INTERPRÉTATION:
+1. Compare CHAQUE k à l'objectif du TYPE DE SÉANCE correspondant (tempo recup/tempo rapide/endurance/long run)
+2. ATTENTION: Plus k est BAS, meilleur c'est (FC basse pour une allure donnée)
+3. k en-dessous de l'objectif = EXCELLENT, efficacité supérieure à la cible
+4. k proche de l'objectif (±0.10) = TRÈS BON, tu es dans ta zone cible
+5. k au-dessus de l'objectif = Marge de progression, sauf si conditions difficiles (chaleur/dénivelé/fatigue)
+6. TOUJOURS contextualiser avec allure/météo/dénivelé pour expliquer les variations
+
+Génère un commentaire de 15-30 mots qui :
+1. Compare la tendance k aux objectifs personnalisés par type de séance
+2. Constate les écarts (au-dessus/en-dessous) de manière factuelle
+3. Contextualise avec conditions (météo, dénivelé, allure)
+4. Ton FACTUEL et OBJECTIF uniquement, sans encouragements ni valorisation
+
+Réponds UNIQUEMENT avec le commentaire.

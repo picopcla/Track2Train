@@ -1,0 +1,27 @@
+# Virtual environments
+.venv/
+venv/
+__pycache__/
+# Secrets/Tokens
+.env
+strava_tokens.json
+client_secrets.json
+# Data files
+activities.json
+activities_real.json
+*.backup*
+profile.json
+running_stats.json
+# Logs
+*.log
+app.log
+# IDE
+.gpt_context.json
+.version_info
+# Archives
+*.7z
+*.zip
+# ML models (optional, can be large)
+*.pkl
+templates/rcloneOauth.txt
+**/rcloneOauth.txt

@@ -1,0 +1,77 @@
+{
+  "week_number": 1,
+  "start_date": "2025-12-30",
+  "end_date": "2026-01-05",
+  "generated_at": "2026-01-04T09:30:28",
+  "runs": [
+    {
+      "day": "Jeudi",
+      "day_date": "2026-01-02",
+      "type": "tempo_recup",
+      "type_display": "Récupération",
+      "distance_km": 7.0,
+      "pace_target": "5:52/km",
+      "fc_target": "125-135 bpm",
+      "fc_target_min": 125,
+      "fc_target_max": 135,
+      "predicted_time": "00:41:04",
+      "zones_target": [1, 2],
+      "k_target": 4.94,
+      "drift_target": 6.6,
+      "notes": "Run très facile pour favoriser la récupération musculaire et cardiovasculaire."
+    },
+    {
+      "day": "Samedi",
+      "day_date": "2026-01-04",
+      "type": "endurance",
+      "type_display": "Endurance",
+      "distance_km": 10.0,
+      "pace_target": "5:35/km",
+      "fc_target": "135-145 bpm",
+      "fc_target_min": 135,
+      "fc_target_max": 145,
+      "predicted_time": "00:55:50",
+      "zones_target": [2, 3],
+      "k_target": 5.59,
+      "drift_target": 8.4,
+      "notes": "Concentre-toi sur le contrôle de l'allure et le maintien en Z2."
+    },
+    {
+      "day": "Dimanche",
+      "day_date": "2026-01-05",
+      "type": "tempo_rapide",
+      "type_display": "Tempo",
+      "distance_km": 8.0,
+      "pace_target": "5:07/km",
+      "fc_target": "145-155 bpm",
+      "fc_target_min": 145,
+      "fc_target_max": 155,
+      "predicted_time": "00:41:00",
+      "zones_target": [3, 4],
+      "k_target": 6.17,
+      "drift_target": 9.2,
+      "notes": "Travail de vitesse et de résistance. 2km échauffement + 4km tempo + 2km retour calme."
+    },
+    {
+      "day": "Lundi",
+      "day_date": "2026-01-06",
+      "type": "long_run",
+      "type_display": "Long Run",
+      "distance_km": 15.0,
+      "pace_target": "5:40/km",
+      "fc_target": "130-140 bpm",
+      "fc_target_min": 130,
+      "fc_target_max": 140,
+      "predicted_time": "01:25:00",
+      "zones_target": [2, 3],
+      "k_target": 5.2,
+      "drift_target": 14.1,
+      "notes": "Maintiens une allure confortable et régulière. Hydrate-toi bien pendant et après le run."
+    }
+  ],
+  "summary": {
+    "total_distance": 40.0,
+    "total_time_predicted": "03:42",
+    "balance": "Semaine de reprise progressive: récup 7km → endurance 10km → tempo 8km → long run 15km"
+  }
+}
