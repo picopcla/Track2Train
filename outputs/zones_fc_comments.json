@@ -1,0 +1,30 @@
+{
+  "2025-12-31T15:48:53Z": {
+    "comment": "La distribution observée, avec une prédominance marquée en zones Z4 et Z3, suggère un effort trop intense pour une séance d'endurance visant le seuil aérobie. Cette répartition risque de compromettre l'objectif de développement de l'endurance fondamentale et d'augmenter le risque de fatigue excessive.",
+    "generated_at": "2026-01-02T07:54:03.133091"
+  },
+  "2026-01-02T11:19:03Z": {
+    "comment": "La prédominance des zones Z1 et Z2 indique une séance axée sur la régénération musculaire, conformément à l'objectif de récupération active. Cependant, la présence, même minime, de temps passé en Z3 suggère un risque de sollicitation cardiovasculaire légèrement supérieure à celle recherchée pour ce type de séance.",
+    "generated_at": "2026-01-04T09:57:47.897414"
+  },
+  "2025-12-28T10:58:21Z": {
+    "comment": "La répartition observée, avec une part importante en zone 3 lors d'une sortie longue en entraînement, suggère un travail cardiovasculaire conséquent. Cette intensité élevée peut compromettre l'objectif d'endurance fondamentale et augmenter le risque de fatigue excessive.",
+    "generated_at": "2026-01-04T09:30:29.149520"
+  },
+  "2026-01-04T10:05:14Z": {
+    "comment": "La répartition observée, avec une prédominance marquée des zones Z3 et Z4, indique une sollicitation cardiovasculaire et musculaire importante, typique d'un effort en compétition. Cette intensité élevée, bien que normale en course, peut potentiellement limiter la capacité à maintenir l'allure sur la durée totale de l'épreuve en raison d'une déplétion rapide des réserves de glycogène.",
+    "generated_at": "2026-01-04T16:23:38.593177"
+  },
+  "2026-01-06T20:51:28Z": {
+    "comment": "Cette distribution de zones de fréquence cardiaque est inadaptée pour une séance de récupération active. La proportion importante de temps passé en zone 3 suggère un effort trop intense, ce qui risque de compromettre la régénération musculaire et d'augmenter la fatigue au lieu de favoriser la récupération.",
+    "generated_at": "2026-01-06T21:40:51.297194"
+  },
+  "2026-01-10T12:04:14Z": {
+    "comment": "La prédominance de la zone 2 suggère un travail aérobie léger, ce qui est globalement adapté à une séance de récupération. Cependant, la présence, même minime, de temps passé en zone 3 indique une intensité potentiellement trop élevée, ce qui pourrait nuire à l'objectif de régénération musculaire recherché.",
+    "generated_at": "2026-01-10T12:41:27.996851"
+  },
+  "2026-01-11T10:06:22Z": {
+    "comment": "La répartition observée, avec une part importante passée en zones Z3 et Z4, suggère un effort trop intense pour une sortie longue d'endurance fondamentale. Cette sollicitation élevée du système cardiovasculaire et la potentielle déplétion du glycogène pourraient compromettre la capacité à soutenir le volume d'entraînement hebdomadaire et impacter négativement la récupération.",
+    "generated_at": "2026-01-11T22:28:19.439842"
+  }
+}

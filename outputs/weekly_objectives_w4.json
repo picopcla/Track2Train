@@ -1,0 +1,11 @@
+{
+  "week_number": 4,
+  "total_distance_km": 28.8,
+  "total_runs": 3,
+  "k_target": 5.3,
+  "drift_target": 7.0,
+  "focus": "sur la respiration.",
+  "generated_at": "2026-01-25T11:19:03.458503",
+  "k_realise": 6.171,
+  "drift_realise": 6.2
+}

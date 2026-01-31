@@ -1,25 +1,14 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-venv/
 .venv/
-env/
+venv/
+__pycache__/
 .env
-
-# Data & Config
-*.json
-!requirements.txt
-outputs/
-VERSION_backup_*
-index_backup_*
-standardized_repair_*_final.py
-fix_version_encoding.py
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-Thumbs.db
-Desktop.ini
+strava_tokens.json
+client_secrets.json
+activities.json
+*.backup*
+profile.json
+running_stats.json
+*.log
+**/rcloneOauth.txt
+*.pkl
+*.7z
