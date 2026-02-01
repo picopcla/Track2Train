@@ -93,29 +93,146 @@ def write_weekly_objectives(week_number, objectives):
     return objectives
 
 
-def compare_weekly_objectives(current_week, previous_week=None):
+def detect_injury_context(text):
     """
-    Compare les objectifs de la semaine courante avec la précédente.
-
-    Returns:
-        Dict avec la comparaison ou None si pas de données précédentes
+    Détecte si le texte contient des mots-clés liés à une blessure ou douleur significative.
     """
-    if previous_week is None:
-        previous_week = current_week - 1
-        if previous_week < 1:
-            previous_week = 52
+    if not text:
+        return None
+        
+    keywords = [
+        "blessure", "douleur vive", "grosse douleur", "mal au genou", 
+        "mal à la cheville", "mal au dos", "tfl", "périostite", 
+        "claquage", "déchirure", "arrêt douleur", "stoppé par la douleur",
+        "impossible de courir", "très mal", "douleur aigue", "medecin", 
+        "kiné", "docteur", "urgence", "douleur au", "douleur à", 
+        "contracture", "mollet", "ischio", "tendon", "douleur"
+    ]
+    
+    found_keywords = []
+    text_lower = text.lower()
+    
+    for kw in keywords:
+        if kw in text_lower:
+            found_keywords.append(kw)
+            
+    return found_keywords if found_keywords else None
 
-    prev_objectives = read_weekly_objectives(previous_week)
-    if not prev_objectives:
+def detect_healing_context(text):
+    """
+    Détecte si le texte contient des mots-clés liés à une guérison ou reprise.
+    """
+    if not text:
+        return None
+        
+    keywords = [
+        "plus de douleur", "ça va mieux", "guéri", "reprise", 
+        "aucune douleur", "sensations ok", "feu vert", "plus mal",
+        "douleur disparue", "zéro douleur", "0 douleur", "0/10", "no pain"
+    ]
+    
+    found_keywords = []
+    text_lower = text.lower()
+    
+    for kw in keywords:
+        if kw in text_lower:
+            found_keywords.append(kw)
+            
+    return found_keywords if found_keywords else None
+
+def calculate_progress_to_goal(weekly_plan, type_averages, current_date_iso):
+    """
+    Calcule la progression vers l'objectif final.
+    """
+    if not weekly_plan or 'summary' not in weekly_plan or 'objective' not in weekly_plan['summary']:
         return None
 
+    obj = weekly_plan['summary']['objective']
+    target_race_pace_str = obj.get('target_pace', '4:58') # ex: "4:58"
+    target_distance = obj.get('target_distance', 21.1)
+    race_date_str = obj.get('race_date') # Supposons que cette info existe ou est ajoutée
+
+    # 1. Convertir target pace en float
+    try:
+        mins, secs = map(int, target_race_pace_str.split(':'))
+        target_pace_min_km = mins + secs / 60.0
+    except:
+        target_pace_min_km = 4.96 # fallback 5:00/km
+
+    # 2. Récupérer allure actuelle (Endurance ou Tempo selon ce qui est dispo)
+    # Pour un semi/marathon, l'allure endurance active (ou tempo long) est un bon indicateur
+    # On regarde l'allure moyenne des runs "endurance" et "tempo_rapide"
+    current_pace_endurance = type_averages.get('endurance', {}).get('allure_moy')
+    current_pace_tempo = type_averages.get('tempo_rapide', {}).get('allure_moy')
+    
+    # Si on a du tempo, c'est mieux pour projeter une allure course
+    current_pace = current_pace_tempo if current_pace_tempo else current_pace_endurance
+    
+    pace_gap_sec = 0
+    if current_pace:
+        # Écart en secondes/km
+        pace_gap_min = current_pace - target_pace_min_km
+        pace_gap_sec = pace_gap_min * 60
+    
+    # 3. Calcul jours restants (si date course connue, sinon fallback)
+    days_remaining = 0
+    if race_date_str:
+        try:
+            race_date = datetime.strptime(race_date_str, "%Y-%m-%d")
+            curr_date = datetime.strptime(current_date_iso[:10], "%Y-%m-%d")
+            days_remaining = (race_date - curr_date).days
+        except:
+            days_remaining = 90 # fallback 3 mois
+    else:
+        # Fallback si pas de date: estimer selon le numéro de semaine du plan vs 52 ?
+        # On va dire 0 pour indiquer "inconnu"
+        days_remaining = 0
+
+    # 4. Long run actuel vs Target
+    # On récupère la distance moyenne des sorties longues
+    current_long_run_dist = type_averages.get('long_run', {}).get('dist_moy')
+    
+    volume_gap_km = 0
+    if current_long_run_dist:
+        # Estimation du milestone idéal : on devrait être à au moins 70% de la distance cible si à moins de 4 semaines
+        # Sinon progression linéaire
+        target_milestone = target_distance
+        if days_remaining > 30:
+            target_milestone = target_distance * 0.7
+        
+        volume_gap_km = target_milestone - current_long_run_dist
+
+    # Détermination du statut
+    # Si pace_gap < 5 sec/km -> EN AVANCE (ou très bien)
+    # Si pace_gap < 15 sec/km -> DANS LES TEMPS
+    # Si pace_gap < 35 sec/km -> RETARD LÉGER
+    # Sinon -> ACTION REQUISE
+    
+    status = "À DÉFINIR"
+    if current_pace:
+        if pace_gap_sec <= 5:
+            status = "EN AVANCE"
+        elif pace_gap_sec < 15:
+            status = "DANS LES TEMPS"
+        elif pace_gap_sec < 35:
+            status = "RETARD LÉGER"
+        else:
+            status = "ACTION REQUISE"
+    
+    # Si le volume est très en retard (> 5km d'écart sur le milestone), on dégrade le statut
+    if volume_gap_km > 5 and status in ["EN AVANCE", "DANS LES TEMPS"]:
+        status = "RETARD LÉGER (VOLUME)"
+
     return {
-        'previous_week': previous_week,
-        'previous_distance': prev_objectives.get('total_distance_km', 0),
-        'previous_runs': prev_objectives.get('total_runs', 0),
-        'previous_k_target': prev_objectives.get('k_target', 0),
-        'previous_drift_target': prev_objectives.get('drift_target', 0),
-        'previous_focus': prev_objectives.get('focus', '')
+        'target_pace': target_race_pace_str,
+        'current_pace': f"{int(current_pace)}:{int((current_pace%1)*60):02d}" if current_pace else "N/D",
+        'pace_gap_sec': round(pace_gap_sec, 1) if current_pace else 0,
+        'target_distance': target_distance,
+        'current_long_run_dist': round(current_long_run_dist, 1) if current_long_run_dist else 0,
+        'volume_gap_km': round(volume_gap_km, 1),
+        'days_remaining': days_remaining,
+        'weeks_remaining': round(days_remaining / 7, 1),
+        'status': status
     }
 
 
@@ -818,6 +935,7 @@ def calculate_type_averages(activities, target_run_type, limit=10):
 
     # Calcul moyennes
     allure_moy = sum(allures) / len(allures) if allures else None
+    dist_moy = sum([act.get('distance_km', 0) for act in matching_runs]) / len(matching_runs) if matching_runs else None
     k_moy = sum(ks) / len(ks) if ks else None
     drift_moy = sum(drifts) / len(drifts) if drifts else None
     cadence_moy = sum(cadences) / len(cadences) if cadences else None
@@ -834,6 +952,7 @@ def calculate_type_averages(activities, target_run_type, limit=10):
     return {
         'count': len(matching_runs),
         'allure_moy': allure_moy,
+        'dist_moy': dist_moy,
         'k_moy': k_moy,
         'drift_moy': drift_moy,
         'cadence_moy': cadence_moy,
@@ -945,10 +1064,10 @@ def generate_coaching_comment(activity, feedback, profile, activities, cardiac_a
     🆕 Génère un commentaire de coaching IA avec HTML structuré et contexte moyennes 10 derniers.
     Utilise UNIQUEMENT les métriques déjà calculées dans activity.
     """
-    # Charger le prompt template v3 (simplifié sans gros exemple HTML)
-    prompt_template = load_prompt("coaching_run_v3")
-    if not prompt_template:
-        return "⚠️ Template de prompt coaching introuvable."
+    # Charger le prompt template (DÉPLACÉ PLUS BAS POUR GÉRER LE MODE BLESSURE) 
+    # prompt_template = load_prompt("coaching_run_v3")
+    # if not prompt_template:
+    #    return "⚠️ Template de prompt coaching introuvable."
 
     # Classifier le run actuel
     run_type = classify_run_type(activity)
@@ -969,8 +1088,17 @@ def generate_coaching_comment(activity, feedback, profile, activities, cardiac_a
             print(f"📅 Chargement weekly plan pour semaine {week_num} (date: {run_date_str})")
             weekly_plan = read_weekly_plan(week_num)
 
+            # VÉRIFICATION STRICTE DE LA SEMAINE
+            if weekly_plan:
+                loaded_week = weekly_plan.get('week_number')
+                if loaded_week and loaded_week != week_num:
+                    print(f"⚠️ ATTENTION: Le plan chargé (semaine {loaded_week}) NE CORRESPOND PAS à la semaine du run ({week_num}).")
+                    if abs(loaded_week - week_num) > 1:
+                         print("❌ Écart trop important, on ignore ce plan pour éviter les hallucinations.")
+                         weekly_plan = None
+                
             if weekly_plan and 'runs' in weekly_plan:
-                print(f"✅ Weekly plan trouvé avec {len(weekly_plan.get('runs', []))} runs")
+                print(f"✅ Weekly plan validé pour semaine {week_num}")
 
                 # 1. D'abord essayer de matcher par date exacte
                 for planned in weekly_plan['runs']:
@@ -1020,6 +1148,20 @@ def generate_coaching_comment(activity, feedback, profile, activities, cardiac_a
         avg = calculate_type_averages(activities, rt, limit=10)
         type_averages[rt] = avg
 
+    # 📈 CALCULER LA PROGRESSION VERS L'OBJECTIF FINAL
+    progress_data = calculate_progress_to_goal(weekly_plan, type_averages, run_date_iso)
+    progress_report = "N/D (Planification manquante)"
+    if progress_data:
+        progress_report = f"""
+        - Objectif: {progress_data['target_distance']} km @ {progress_data['target_pace']}/km
+        - État actuel: {progress_data['current_pace']}/km (allure ref) | SL moy: {progress_data['current_long_run_dist']} km
+        - Écart: {progress_data['pace_gap_sec']}s/km | Volume gap: {progress_data['volume_gap_km']} km
+        - Échéance: {progress_data['days_remaining']} jours ({progress_data['weeks_remaining']} sem)
+        - STATUT GLOBAL: {progress_data['status']}
+        """
+
+    # ... (reste du formater les moyennes pour le prompt) ...
+
     # Formater les moyennes pour le prompt
     def format_avg(avg_dict):
         if avg_dict['count'] == 0:
@@ -1064,12 +1206,200 @@ Moyennes 10 derniers LONG RUN: {format_avg(type_averages['long_run'])}
     cardio = feedback.get('cardio_feeling', 'moderate')
     notes = feedback.get('notes', '').strip()
 
-    # Si dernier run de la semaine, générer le bilan hebdomadaire
+    # DÉTECTION MODE MÉDECIN (CYCLE DE VIE BLESSURE)
+    injury_keywords = detect_injury_context(notes)
+    healing_keywords = detect_healing_context(notes)
+    
+    # Charger l'état de blessure actuel
+    injury_status = profile.get('injury_status', {'is_active': False, 'status': 'HEALTHY'})
+    is_injured_stored = injury_status.get('is_active', False)
+    
+    prompt_name = "coaching_run_v3"
+    new_status = injury_status.copy()
+
+    # --- LOGIQUE D'ÉTAT ---
+    
+    # CAS 1 : NOUVELLE BLESSURE (Choc)
+    if injury_keywords and not is_injured_stored:
+        print(f"🚑 BLESSURE DÉTECTÉE (Choc): {injury_keywords}")
+        prompt_name = "coaching_run_injury_onset"
+        new_status = {
+            'is_active': True,
+            'status': 'ONSET',
+            'start_date': activity.get('date'),
+            'last_symptom': ", ".join(injury_keywords)
+        }
+
+    # CAS 2 : SUIVI BLESSURE (Ongoing)
+    elif is_injured_stored and not healing_keywords:
+        print(f"🚑 SUIVI BLESSURE (Ongoing)")
+        prompt_name = "coaching_run_injury_ongoing"
+        # On reste actif, on met juste à jour le symptôme si nouveau
+        if injury_keywords:
+             new_status['last_symptom'] = ", ".join(injury_keywords)
+             
+    # CAS 3 : REPRISE / GUÉRISON
+    elif is_injured_stored and healing_keywords:
+        print(f"🟢 REPRISE DÉTECTÉE (Keywords: {healing_keywords})")
+        prompt_name = "coaching_run_injury_recovery"
+        # On désactive le mode blessure strict, mais on note la recovery
+        new_status = {
+            'is_active': False,
+            'status': 'RECOVERY',
+            'recovery_date': activity.get('date')
+        }
+        
+    # CAS 4 : MODE RECOVERY (Maintien de l'état pendant la semaine de reprise)
+    elif injury_status.get('status') == 'RECOVERY' and not injury_keywords:
+         # On reste en RECOVERY tout au long de la semaine de réathlétisation.
+         # La transition vers HEALTHY se fera lors du prochain renouvellement hebdomadaire dans index().
+         prompt_name = "coaching_run_injury_recovery"
+         # new_status reste identique à injury_status (donc pas de changement ici)
+
+    # SAUVEGARDE ÉTAT ET RÉGÉNÉRATION DU PLAN SI BESOIN
+    if new_status != injury_status:
+        profile['injury_status'] = new_status
+        save_profile_local(profile)
+        print(f"💾 Statut blessure mis à jour : {new_status['status']}")
+        
+        # 🔄 RÉGÉNÉRATION IMMÉDIATE DU PLAN HEBDOMADAIRE (Mid-week adjustment)
+        try:
+            print("🔄 Régénération du plan hebdomadaire suite à changement d'état médical...")
+            new_plan = generate_weekly_program(profile, activities)
+            write_weekly_plan(new_plan)
+            print("✅ Plan hebdomadaire mis à jour avec le nouveau protocole.")
+        except Exception as e:
+            print(f"⚠️ Erreur lors de la régénération du plan : {e}")
+
+    # Charger le prompt template
+    prompt_template = load_prompt(prompt_name)
+    if not prompt_template:
+        # Fallback si fichiers manquants
+        print(f"⚠️ Prompt {prompt_name} introuvable, usage standard.")
+        prompt_template = load_prompt("coaching_run_v3")
+
+    # Calcul de la durée de la blessure (si applicable)
+    injury_duration_str = "depuis inconnue"
+    if is_injured_stored and injury_status.get('start_date'):
+        try:
+            start_date_str = injury_status.get('start_date')
+            current_date_str = activity.get('date')
+            
+            # Nettoyage des formats de date (garder YYYY-MM-DD)
+            d1 = datetime.strptime(start_date_str[:10], "%Y-%m-%d")
+            d2 = datetime.strptime(current_date_str[:10], "%Y-%m-%d")
+            
+            days = (d2 - d1).days
+            # Si c'est le jour même, cela veut dire que c'est le 2ème run du jour ou une erreur de date
+            if days == 0:
+                injury_duration_str = "depuis le run précédent"
+            else:
+                injury_duration_str = f"depuis {days} jours"
+        except Exception as e:
+            print(f"⚠️ Erreur calcul durée blessure: {e}")
+            pass
+
+    # Injections contextuelles pour les prompts blessure
+    if "{injury_keywords}" in prompt_template:
+         kw_str = ", ".join(injury_keywords) if injury_keywords else injury_status.get('last_symptom', 'Douleur non spécifiée')
+         prompt_template = prompt_template.replace("{injury_keywords}", kw_str)
+
+    if "{injury_context}" in prompt_template:
+        # Recuperer le symptome stocké
+        symptom = injury_status.get('last_symptom', 'Douleur non spécifiée')
+        prompt_template = prompt_template.replace("{injury_context}", symptom)
+
+    if "{injury_duration}" in prompt_template:
+        prompt_template = prompt_template.replace("{injury_duration}", injury_duration_str)
+
+    if "{progress_report}" in prompt_template:
+        prompt_template = prompt_template.replace("{progress_report}", progress_report)
+    
+    # Injections individuelles pour plus de flexibilité dans les phrases
+    if progress_data:
+        if "{target_pace}" in prompt_template:
+            prompt_template = prompt_template.replace("{target_pace}", str(progress_data['target_pace']))
+        if "{target_distance}" in prompt_template:
+            prompt_template = prompt_template.replace("{target_distance}", str(progress_data['target_distance']))
+        if "{weeks_remaining}" in prompt_template:
+            prompt_template = prompt_template.replace("{weeks_remaining}", str(progress_data['weeks_remaining']))
+
+    def format_pace(decimal_pace):
+        if not decimal_pace: return "N/D"
+        return f"{int(decimal_pace)}:{int((decimal_pace % 1) * 60):02d}/km"
+
+    # Allures historiques pour injection
+    avg_endurance_pace_val = type_averages.get('endurance', {}).get('allure_moy')
+    avg_recup_pace_val = type_averages.get('tempo_recup', {}).get('allure_moy')
+
+    # --- LOGIQUE SCIENTIFIQUE DE RÉATHLÉTISATION ---
+    # La réathlétisation préconise une réduction de 20-30% de l'intensité métabolique au départ.
+    # On privilégie l'allure de récupération réelle (historique) si elle existe.
+    
+    # Z1 de sécurité (Run Test) : Allure de récupération, ou Endurance + 25% (temps au km)
+    safety_z1_source = "Estimation (Endurance +25%)"
+    if avg_recup_pace_val:
+        safety_z1_val = avg_recup_pace_val
+        safety_z1_source = "Moyenne Historique (Récup)"
+    elif avg_endurance_pace_val:
+        # Si on n'a que de l'endurance, on applique une marge de sécurité de 25% (plus lent)
+        safety_z1_val = avg_endurance_pace_val * 1.25
+    else:
+        safety_z1_val = None
+        safety_z1_source = "N/D"
+
+    # Z2 de sécurité (Reprise) : Endurance + 15% (plus lent)
+    safety_z2_source = "Estimation (Endurance +15%)"
+    if avg_endurance_pace_val:
+        safety_z2_val = avg_endurance_pace_val * 1.15
+        safety_z2_source = f"Calculé sur base Endurance ({format_pace(avg_endurance_pace_val)})"
+    else:
+        safety_z2_val = None
+        safety_z2_source = "N/D"
+
+    if "{avg_endurance_pace}" in prompt_template:
+        prompt_template = prompt_template.replace("{avg_endurance_pace}", format_pace(avg_endurance_pace_val))
+    
+    if "{avg_recup_pace}" in prompt_template:
+        prompt_template = prompt_template.replace("{avg_recup_pace}", format_pace(avg_recup_pace_val))
+
+    if "{safety_z1_pace}" in prompt_template:
+        prompt_template = prompt_template.replace("{safety_z1_pace}", format_pace(safety_z1_val))
+    
+    if "{safety_z2_pace}" in prompt_template:
+        prompt_template = prompt_template.replace("{safety_z2_pace}", format_pace(safety_z2_val))
+
+    if "{safety_z1_source}" in prompt_template:
+        prompt_template = prompt_template.replace("{safety_z1_source}", safety_z1_source)
+
+    if "{safety_z2_source}" in prompt_template:
+        prompt_template = prompt_template.replace("{safety_z2_source}", safety_z2_source)
+
+    # Injection des zones FC Z1 et Z2 (Karvonen)
+    hr_rest = profile.get('hr_rest', 59)
+    hr_max = profile.get('hr_max', 170)
+    hr_reserve = hr_max - hr_rest
+    
+    z1_min, z1_max = int(hr_reserve * 0.50 + hr_rest), int(hr_reserve * 0.60 + hr_rest)
+    z2_min, z2_max = int(hr_reserve * 0.60 + hr_rest), int(hr_reserve * 0.70 + hr_rest)
+    
+    if "{hr_zone_1}" in prompt_template:
+        prompt_template = prompt_template.replace("{hr_zone_1}", f"{z1_min}-{z1_max} bpm")
+    if "{hr_zone_2}" in prompt_template:
+        prompt_template = prompt_template.replace("{hr_zone_2}", f"{z2_min}-{z2_max} bpm")
+         
+    if "{week_number}" in prompt_template:
+        prompt_template = prompt_template.replace("{week_number}", str(week_num))
+
+    # Génération du contexte HTML (Moyennes, etc.)
+
+
+    # Initialisation variables
     week_summary = ""
     current_week = 0
     next_week = 1
 
-    print(f"🔍 is_last_run_of_week = {is_last_run_of_week}, activities count = {len(activities) if activities else 0}")
+    # Classifier le run actuel
     if is_last_run_of_week and activities and run_date_iso:
         print(f"✅ Génération du bilan de semaine activée")
         try:
@@ -1180,6 +1510,27 @@ Allure cible: {obj.get('target_pace', '4:58')}/km
 Distance: {obj.get('target_distance', 21.1)} km
 """
 
+    planned_objectives_text = ""
+    general_objectives_text = ""
+    
+    # 🆕 Préparer les objectifs généraux (recalculés)
+    if profile and 'personalized_targets' in profile:
+        targets = profile['personalized_targets']
+        relevant_target = targets.get(run_type, {}) if run_type else {}
+        if not relevant_target and run_type:
+            # Fallback simple
+            if 'tempo' in run_type: relevant_target = targets.get('tempo_rapide', {})
+            elif 'long' in run_type: relevant_target = targets.get('long_run', {})
+            elif 'recup' in run_type: relevant_target = targets.get('tempo_recup', {})
+            
+        general_objectives_text = f"""
+=== OBJECTIFS GÉNÉRAUX PROFIL (P70/P40) ===
+Type détecté: {run_type}
+k cible (Efficacité): {relevant_target.get('k_target', 'N/D')}
+Drift cible (Endurance): {relevant_target.get('drift_target', 'N/D')}%
+(Ces objectifs sont vos standards actuels calculés sur vos meilleurs runs)
+"""
+
     if planned_run:
         planned_objectives_text = f"""
 === OBJECTIFS CE RUN (Programme Semaine) ===
@@ -1193,6 +1544,28 @@ Zones cibles: {', '.join([f'Z{z}' for z in planned_run.get('zones_target', [])])
 Notes coach: {planned_run.get('notes', 'N/D')}
 {final_objective_text}
 ⚠️ COMPARE LE RUN ACTUEL AVEC CES OBJECTIFS DANS TON ANALYSE"""
+    else:
+        planned_objectives_text = f"""
+=== OBJECTIFS CE RUN ===
+Pas de séance planifiée spécifique trouvée.
+UTILISE LES OBJECTIFS GÉNÉRAUX PROFIL CI-DESSUS POUR L'ANALYSE.
+{final_objective_text}
+"""
+
+
+    # Calcul Progression
+    progression_data = calculate_progress_to_goal(weekly_plan, type_averages, run_date_iso)
+    progression_text = ""
+    if progression_data:
+        progression_text = f"""
+=== PROGRESSION VERS OBJECTIF FINAL ===
+Objectif: Semi-Marathon (Cible {progression_data['target_pace']}/km)
+Statut Calculé: {progression_data['status']}
+Jours restants: {progression_data['days_remaining'] if progression_data['days_remaining'] > 0 else 'Inconnu'}
+Allure Actuelle Moyenne (Tempo/Endurance): {progression_data['current_pace']}/km
+Écart Allure: {progression_data['pace_gap_sec']} sec/km
+(Si écart négatif = en avance, si positif = retard à combler)
+"""
 
     # Formatter les données pour le prompt
     data_text = f"""
@@ -1206,7 +1579,9 @@ Notes: {notes if notes else "Aucune"}
 
 === MOYENNES 10 DERNIERS ===
 {moyennes_text}
+{general_objectives_text}
 {planned_objectives_text}
+{progression_text}
 {week_summary}
 === PROGRAMME SEMAINE SUIVANTE ===
 Numéro de semaine à afficher: {next_week}
@@ -1235,13 +1610,22 @@ Numéro de semaine à afficher: {next_week}
         # Gemini génère directement le HTML structuré
         ai_comment = response.text.strip()
 
-        # 🧹 Nettoyer les balises markdown si présentes
-        if ai_comment.startswith('```html'):
-            ai_comment = ai_comment[7:]  # Enlever ```html
-        if ai_comment.startswith('```'):
-            ai_comment = ai_comment[3:]  # Enlever ```
-        if ai_comment.endswith('```'):
-            ai_comment = ai_comment[:-3]  # Enlever ``` final
+        # 🧹 Nettoyage Robuste : On ne garde que ce qui est entre le premier <div et le dernier </div>
+        # Cela élimine les introductions ("Voici l'analyse...") et les balises markdown
+        start_idx = ai_comment.find('<div')
+        end_idx = ai_comment.rfind('</div>')
+        
+        if start_idx != -1 and end_idx != -1:
+            ai_comment = ai_comment[start_idx:end_idx + 6]
+        else:
+            # Fallback : Nettoyage basique si pas de structure div trouvée
+            if ai_comment.startswith('```html'):
+                ai_comment = ai_comment[7:]
+            if ai_comment.startswith('```'):
+                ai_comment = ai_comment[3:]
+            if ai_comment.endswith('```'):
+                ai_comment = ai_comment[:-3]
+        
         ai_comment = ai_comment.strip()
 
         # 🧹 Vérifier et corriger les balises HTML non fermées
@@ -3093,11 +3477,132 @@ def generate_weekly_program(profile, activities, week_summary_text=""):
             p75_index = int(len(all_recent_paces) * 0.75)
             baseline_pace = all_recent_paces[p75_index]  # Allure P75 = tempo réaliste
 
-            # Dériver les autres allures depuis cette baseline
             pace_by_type['tempo_recup'] = baseline_pace + 30  # +30 sec pour récup
             pace_by_type['endurance'] = baseline_pace + 10    # +10 sec pour endurance
             pace_by_type['long_run'] = baseline_pace + 15     # +15 sec pour long run
 
+    # --- LOGIQUE BLESSURE (INJURY AWARENESS) ---
+    injury_status = profile.get('injury_status', {'is_active': False, 'status': 'HEALTHY'})
+    is_injured = injury_status.get('is_active', False)
+    is_recovering = injury_status.get('status') == 'RECOVERY'
+    injury_context = injury_status.get('last_symptom', 'blessure')
+
+    # Calcul des zones FC Karvonen pour le planning
+    hr_rest = profile.get('hr_rest', 59)
+    hr_max = profile.get('hr_max', 172)
+    hr_reserve = hr_max - hr_rest
+    
+    # Zones de base (Karvonen)
+    z1_min, z1_max = int(hr_reserve * 0.50 + hr_rest), int(hr_reserve * 0.60 + hr_rest)
+    z2_min, z2_max = int(hr_reserve * 0.60 + hr_rest), int(hr_reserve * 0.70 + hr_rest)
+
+    # Calcul des allures de sécurité scientifiques
+    avg_end_pace = pace_by_type.get('endurance', avg_pace)
+    avg_rec_pace = pace_by_type.get('tempo_recup')
+    
+    # Z1 de sécurité = Recup ou Endurance + 25%
+    if avg_rec_pace:
+        safety_z1_sec = avg_rec_pace
+    else:
+        safety_z1_sec = avg_end_pace * 1.25
+        
+    # Z2 de sécurité = Endurance + 15%
+    safety_z2_sec = avg_end_pace * 1.15
+
+    def format_sec_to_pace(seconds):
+        return f"{int(seconds // 60)}:{int(seconds % 60):02d}/km"
+
+    # CASE A: SEMAINE MÉDICALE (Blessure Active)
+    if is_injured:
+        return {
+            'week_number': week_number,
+            'start_date': monday.strftime('%Y-%m-%d'),
+            'end_date': sunday.strftime('%Y-%m-%d'),
+            'generated_at': datetime.now().isoformat(),
+            'is_medical_week': True,
+            'runs': [
+                {
+                    'day': 'Lundi', 'day_date': monday.strftime('%Y-%m-%d'),
+                    'type': 'repos', 'type_display': '🛑 REPOS / SOINS',
+                    'distance_km': 0, 'pace_target': 'N/A', 'fc_target': 'N/A',
+                    'notes': f'Phase de protection. Protocole PEACE & LOVE pour votre {injury_context}.'
+                },
+                {
+                    'day': 'Mercredi', 'day_date': (monday + timedelta(days=2)).strftime('%Y-%m-%d'),
+                    'type': 'velo', 'type_display': '🚴 ACTIVITÉ PORTÉE',
+                    'distance_km': 0, 'pace_target': '30 min', 'fc_target': f'<{z1_max} bpm',
+                    'notes': 'Vélo ou natation très douce. Cardio léger uniquement si 0 douleur.'
+                },
+                {
+                    'day': 'Vendredi', 'day_date': (monday + timedelta(days=4)).strftime('%Y-%m-%d'),
+                    'type': 'marche', 'type_display': '🚶 MARCHE ACTIVE',
+                    'distance_km': 3.0, 'pace_target': 'Libre', 'fc_target': f'<{z1_max} bpm',
+                    'notes': 'Test de charge mécanique. Observez vos sensations au niveau de la zone réflexe.'
+                },
+                {
+                    'day': 'Dimanche', 'day_date': (monday + timedelta(days=6)).strftime('%Y-%m-%d'),
+                    'type': 'run_test', 'type_display': '🏃 RUN TEST (Conditionnel)',
+                    'distance_km': 3.0, 'pace_target': format_sec_to_pace(safety_z1_sec),
+                    'fc_target': f'{z1_min}-{z1_max} bpm',
+                    'notes': f'Uniquement si 0 douleur à la marche. 20 min @ {format_sec_to_pace(safety_z1_sec)}. Stop immédiat si gêne.'
+                }
+            ],
+            'summary': {
+                'total_distance': 6.0,
+                'balance': f'Protocole médical strict : Récupération de votre {injury_context}.'
+            }
+        }
+
+    # CASE B: SEMAINE DE RÉATHLÉTISATION (Reprise)
+    if is_recovering:
+        vol_red = 0.6  # 40% de réduction (on garde 60% du volume)
+        return {
+            'week_number': week_number,
+            'start_date': monday.strftime('%Y-%m-%d'),
+            'end_date': sunday.strftime('%Y-%m-%d'),
+            'generated_at': datetime.now().isoformat(),
+            'is_recovery_week': True,
+            'runs': [
+                {
+                    'day': 'Lundi', 'day_date': monday.strftime('%Y-%m-%d'),
+                    'type': 'recuperation', 'type_display': 'Reprise Z1',
+                    'distance_km': round(5.0 * vol_red, 1),
+                    'pace_target': format_sec_to_pace(safety_z1_sec),
+                    'fc_target': f'{z1_min}-{z1_max} bpm',
+                    'notes': 'Reprise très douce. Focus technique et relâchement.'
+                },
+                {
+                    'day': 'Mercredi', 'day_date': (monday + timedelta(days=2)).strftime('%Y-%m-%d'),
+                    'type': 'endurance', 'type_display': 'Reprise Z2',
+                    'distance_km': round(8.0 * vol_red, 1),
+                    'pace_target': format_sec_to_pace(safety_z2_sec),
+                    'fc_target': f'{z2_min}-{z2_max} bpm',
+                    'notes': 'Endurance fondamentale bridée. Ne cherchez pas la vitesse.'
+                },
+                {
+                    'day': 'Vendredi', 'day_date': (monday + timedelta(days=4)).strftime('%Y-%m-%d'),
+                    'type': 'recuperation', 'type_display': 'Reprise Z1',
+                    'distance_km': round(5.0 * vol_red, 1),
+                    'pace_target': format_sec_to_pace(safety_z1_sec),
+                    'fc_target': f'{z1_min}-{z1_max} bpm',
+                    'notes': 'Entretien de la charge mécanique sans fatigue cumulée.'
+                },
+                {
+                    'day': 'Dimanche', 'day_date': (monday + timedelta(days=6)).strftime('%Y-%m-%d'),
+                    'type': 'long_run', 'type_display': 'Sortie Longue Reprise',
+                    'distance_km': round(12.0 * vol_red, 1),
+                    'pace_target': format_sec_to_pace(safety_z2_sec),
+                    'fc_target': f'{z2_min}-{z2_max} bpm',
+                    'notes': 'Test de durabilité. Si validé sans douleur, retour au plan normal la semaine prochaine.'
+                }
+            ],
+            'summary': {
+                'total_distance': round(30.0 * vol_red, 1),
+                'balance': 'Réathlétisation progressive (Volume -40%, Intensité cappée Z2).'
+            }
+        }
+
+    # --- CAS NORMAL (SI NI BLESSÉ NI EN REPRISE) ---
     # --- RUN 1: RÉCUPÉRATION 5-6km (Lundi) ---
     run1_distance = 5.5
     run1_pace_sec = pace_by_type.get('tempo_recup', avg_pace) + 20
@@ -4040,6 +4545,16 @@ def index():
         should_regenerate = False
 
     if should_regenerate:
+        # 🏥 Transition finale du cycle de blessure : RECOVERY -> HEALTHY
+        # Si on change de semaine et que la semaine qui s'achève était une semaine de reprise (COVERY)
+        if existing_program and existing_program.get('is_recovery_week'):
+            injury_status = profile.get('injury_status', {})
+            if injury_status.get('status') == 'RECOVERY' and not injury_status.get('is_active'):
+                print("🏁 Fin du protocole de reprise. Retour à l'état HEALTHY.")
+                profile['injury_status'] = {'is_active': False, 'status': 'HEALTHY'}
+                save_profile_local(profile)
+                # Note: profile est utilisé juste en dessous pour generate_weekly_program
+
         print(f"📅 Génération nouveau programme hebdomadaire (semaine {current_week_number})")
         weekly_program = generate_weekly_program(profile, activities)
         write_weekly_plan(weekly_program)
@@ -4354,53 +4869,7 @@ def profile():
     return render_template('profile.html', profile=prof, personalized_targets=personalized_targets)
 
 
-@app.route('/objectifs', methods=['GET'])
-def objectifs():
-    """Page de gestion des objectifs par type de run"""
-    try:
-        prof = load_profile_from_drive()
-    except DriveUnavailableError as e:
-        return render_template(
-            "objectifs.html",
-            profile={},
-            drive_error=f"⚠️ Données indisponibles (Drive) : {e}",
-        )
 
-    # Charger les activités pour statistiques
-    activities = load_activities_from_drive()
-
-    # Compter les runs par type
-    stats_by_type = {}
-    for act in activities:
-        cat = act.get('session_category')
-        if cat:
-            if cat not in stats_by_type:
-                stats_by_type[cat] = {'count': 0, 'k_values': [], 'drift_values': []}
-            stats_by_type[cat]['count'] += 1
-
-            k = act.get('k_moy')
-            drift = act.get('deriv_cardio')
-            if isinstance(k, (int, float)):
-                stats_by_type[cat]['k_values'].append(k)
-            if isinstance(drift, (int, float)):
-                stats_by_type[cat]['drift_values'].append(drift)
-
-    # Calculer statistiques (moyenne, p20, p80)
-    for cat, stats in stats_by_type.items():
-        if stats['k_values']:
-            stats['k_mean'] = np.mean(stats['k_values'])
-            stats['k_p20'] = np.percentile(stats['k_values'], 20)
-            stats['k_p80'] = np.percentile(stats['k_values'], 80)
-        if stats['drift_values']:
-            stats['drift_mean'] = np.mean(stats['drift_values'])
-            stats['drift_p20'] = np.percentile(stats['drift_values'], 20)
-            stats['drift_p80'] = np.percentile(stats['drift_values'], 80)
-
-    return render_template(
-        'objectifs.html',
-        profile=prof,
-        stats_by_type=stats_by_type
-    )
 
 
 @app.route('/api/objectifs/update', methods=['POST'])
@@ -4437,6 +4906,59 @@ def update_objectifs():
     invalidate_profile_cache()  # Invalider cache après modification
 
     return jsonify({'success': True, 'message': 'Objectifs mis à jour'})
+
+
+@app.route('/api/objectifs/recalculate', methods=['POST'])
+def recalculate_objectifs():
+    """Recalcule les objectifs automatiquement basé sur l'historique (P30/P40)"""
+    try:
+        prof = load_profile_from_drive()
+        activities = load_activities_from_drive()
+    except DriveUnavailableError as e:
+        return jsonify({'error': str(e)}), 503
+
+    # Initialiser si besoin
+    if 'personalized_targets' not in prof:
+        prof['personalized_targets'] = {}
+
+    # Grouper par type (uniquement ceux gérés)
+    valid_types = ['tempo_recup', 'tempo_rapide', 'endurance', 'long_run']
+    stats_by_type = {t: {'k': [], 'drift': []} for t in valid_types}
+
+    for act in activities:
+        cat = act.get('session_category')
+        if cat in valid_types:
+            k = act.get('k_moy')
+            drift = act.get('deriv_cardio')
+            if isinstance(k, (int, float)) and k > 0:
+                stats_by_type[cat]['k'].append(k)
+            if isinstance(drift, (int, float)) and drift > -10: # Filtre min simple
+                stats_by_type[cat]['drift'].append(drift)
+
+    # Calcul et mise à jour (Top 30% K, Top 40% Drift)
+    for cat in valid_types:
+        data = stats_by_type[cat]
+        # K: Higher is better -> P70 (Top 30%)
+        if len(data['k']) >= 3:
+            k_target = np.percentile(data['k'], 70)
+        else:
+            k_target = None # Pas assez de données
+
+        # Drift: Lower is better -> P40 (Bottom 40%)
+        if len(data['drift']) >= 3:
+            drift_target = np.percentile(data['drift'], 40)
+        else:
+            drift_target = None
+
+        if k_target is not None and drift_target is not None:
+            if cat not in prof['personalized_targets']:
+                prof['personalized_targets'][cat] = {}
+            prof['personalized_targets'][cat]['k_target'] = float(k_target)
+            prof['personalized_targets'][cat]['drift_target'] = float(drift_target)
+
+    save_profile_local(prof)
+    invalidate_profile_cache()
+    return jsonify({'success': True, 'message': 'Objectifs recalculés'})
 
 
 @app.route('/zones-entrainement', methods=['GET'])
@@ -4568,6 +5090,36 @@ def stats_page():
     # Types de runs disponibles pour le filtre
     run_types = list(set(act['type'] for act in filtered_activities if act['type']))
 
+    # Statistiques détaillées par type pour la vue unifiée (Objectifs)
+    stats_by_type = {}
+    
+    # On utilise toutes les activités pour le calcul des objectifs/stats par type
+    # (Pas seulement celles de la période filtrée)
+    for act in activities:
+        cat = act.get('session_category')
+        if cat:
+            if cat not in stats_by_type:
+                stats_by_type[cat] = {'count': 0, 'k_values': [], 'drift_values': []}
+            stats_by_type[cat]['count'] += 1
+            
+            k = act.get('k_moy')
+            drift = act.get('deriv_cardio')
+            if isinstance(k, (int, float)):
+                stats_by_type[cat]['k_values'].append(k)
+            if isinstance(drift, (int, float)):
+                stats_by_type[cat]['drift_values'].append(drift)
+    
+    # Calculer les métriques pour chaque type
+    for cat, stats in stats_by_type.items():
+        if stats['k_values']:
+            stats['k_mean'] = np.mean(stats['k_values'])
+            # P70 (Top 30%) pour K (Higher is better)
+            stats['k_p70'] = np.percentile(stats['k_values'], 70)
+        if stats['drift_values']:
+            stats['drift_mean'] = np.mean(stats['drift_values'])
+            # P40 (Bottom 40%) pour Drift (Lower is better)
+            stats['drift_p40'] = np.percentile(stats['drift_values'], 40)
+
     stats_data = {
         'period': period,
         'period_label': period_label,
@@ -4584,8 +5136,14 @@ def stats_page():
         'chart_drift': chart_drift,
         'activities': filtered_activities[-20:]  # 20 dernières pour le tableau
     }
+    
+    # Charger le profil pour les objectifs
+    try:
+        profile = load_profile()
+    except:
+        profile = {}
 
-    return render_template('stats.html', stats_data=stats_data)
+    return render_template('stats.html', stats_data=stats_data, stats_by_type=stats_by_type, profile=profile)
 
 
 def convert_pace_to_seconds(pace_str):

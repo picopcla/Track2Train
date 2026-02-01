@@ -5,5 +5,7 @@
   "k_target": 4.8,
   "drift_target": 10.0,
   "focus": "Écoute ton corps et reviens progressivement à l'entraînement sans forcer. La priorité est de soigner ce mollet pour éviter une blessure plus grave.",
-  "generated_at": "2026-01-25T11:19:17.212549"
+  "generated_at": "2026-02-01T19:20:44.767605",
+  "k_realise": 4.71,
+  "drift_realise": 11.6
 }

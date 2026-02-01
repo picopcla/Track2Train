@@ -1,5 +1,33 @@
 # 📋 Changelog Track2Train
 
+## [2.16.0] - 2026-02-01
+
+### 🎯 Unification Stats & Objectifs + Correction IA
+
+#### Nouveau
+**Dashboard Unifié (Stats):**
+- Fusion des pages `/objectifs` et `/stats` en une seule vue cohérente.
+- **Pilotage Direct:** Cartes d'objectifs (K et Drift) intégrées en haut de la page stats.
+- **Suggestions Dynamiques:** Affichage des suggestions P30 (K) et P40 (Drift) basées sur l'historique récent.
+- **Action Immédiate:** Boutons pour sauvegarder les cibles ou lancer un recalcul automatique par l'IA sans changer de page.
+
+**Amélioration Coaching IA:**
+- **Prompt Contextuel:** L'IA reçoit désormais *explicitement* les objectifs généraux du profil (K/Drift) pour chaque analyse.
+- **Correction:** Fallback automatique sur les objectifs du profil si aucun run n'est planifié spécifiquement (évite les analyses "aveugles").
+- **Cohérence:** Les feedbacks IA, les graphiques et le bilan hebdo utilisent tous la même source de vérité pour les cibles.
+
+#### Supprimé
+- **Page Legacy:** Suppression complète de l'ancienne page `objectifs.html` et de sa route `/objectifs`.
+- **Navigation:** Retrait du bouton "Objectifs" de l'index (désormais redondant).
+
+#### Impact
+- Expérience utilisateur simplifiée (tout au même endroit).
+- Cohérence totale entre les chiffres affichés et l'analyse du coach.
+- Codebase plus propre (moins de duplication).
+
+---
+
+
 ## [2.13.0] - 2026-01-14
 
 ### 🎯 Système de Score Hebdomadaire & Objectifs Évolutifs

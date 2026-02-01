@@ -409,13 +409,13 @@
     "activity_id": "17208870727",
     "date": "2026-01-28T19:36:41Z",
     "mode_run": "training",
-    "is_last_run_of_week": false,
+    "is_last_run_of_week": true,
     "rating_stars": 2,
     "difficulty": 3,
     "legs_feeling": "normal",
     "cardio_feeling": "moderate",
     "enjoyment": 3,
-    "notes": "Terrain valloné. Douleur legzre gznz forte tjrs mollet gauche",
-    "timestamp": "2026-01-28T20:59:05.810645"
+    "notes": "Terrain valloné. Douleur persistante dans le mollet gauche",
+    "timestamp": "2026-02-01T17:55:52.950411"
   }
 }

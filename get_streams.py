@@ -9,6 +9,45 @@ from dotenv import load_dotenv
 # Import pour mise à jour automatique des stats
 from calculate_running_stats import calculate_stats_by_type, save_running_stats
 
+# WMO Weather Codes mapping
+def get_weather_emoji(code):
+    if code is None: return "❓"
+    if code == 0: return "☀️"
+    if code in [1, 2, 3]: return "⛅"
+    if code in [45, 48]: return "🌫️"
+    if code in [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]: return "🌧️"
+    if code in [71, 73, 75, 77, 85, 86]: return "❄️"
+    if code in [95, 96, 99]: return "⛈️"
+    return "csp"
+
+def fetch_open_meteo(lat, lng, date_str):
+    """
+    Récupère la météo histo/forecast pour une date donnée.
+    Retourne (temp_max, weather_code)
+    """
+    try:
+        # Format date: YYYY-MM-DD
+        day_str = date_str[:10]
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": lat,
+            "longitude": lng,
+            "start_date": day_str,
+            "end_date": day_str,
+            "daily": "weather_code,temperature_2m_max",
+            "timezone": "auto"
+        }
+        r = requests.get(url, params=params, timeout=5)
+        if r.status_code == 200:
+            d = r.json()
+            if "daily" in d:
+                wc = d["daily"]["weather_code"][0] if d["daily"].get("weather_code") else None
+                tm = d["daily"]["temperature_2m_max"][0] if d["daily"].get("temperature_2m_max") else None
+                return tm, wc
+    except Exception as e:
+        print(f"⚠️ Météo API erreur: {e}")
+    return None, None
+
 
 # ----------------------------
 # ENV bootstrap (Strava tokens)
@@ -203,6 +242,14 @@ def process_activity(activity_id: int):
     altitude    = (streams.get("altitude") or {}).get("data", []) or []
     latlng      = (streams.get("latlng") or {}).get("data", []) or []
     cadence_raw = (streams.get("cadence") or {}).get("data", []) or []
+    temp_data   = (streams.get("temperature") or {}).get("data", []) or []
+
+    # Calculer température moyenne depuis Strava (si dispo)
+    avg_temp_strava = None
+    if temp_data:
+        valid_temps = [t for t in temp_data if isinstance(t, (int, float))]
+        if valid_temps:
+            avg_temp_strava = round(sum(valid_temps) / len(valid_temps), 1)
 
     if not time_data or not distance:
         print(f"⚠️ Pas de données time/distance pour {activity_id}, on ignore.")
@@ -216,6 +263,27 @@ def process_activity(activity_id: int):
         filled = _map_series_to_points_by_time(pts, time_data, cadence_raw, "cad_raw", tol_sec=5)
         print(f"   → cad_raw remplie sur {filled} points")
         act["points"] = pts
+        
+        # En profiter pour MAJ la météo si manquante
+        if act.get("weather_emoji") is None or act.get("temperature") is None:
+            # Récupérer lat/lng moyen
+            alat = avg_lat if 'avg_lat' in locals() and avg_lat else None 
+            # (Note: avg_lat n'est calculé que plus bas, on utilise celui du premier point si dispo)
+            if not alat and pts and pts[0].get('lat'): alat = pts[0].get('lat')
+            
+            alng = avg_lng if 'avg_lng' in locals() and avg_lng else None
+            if not alng and pts and pts[0].get('lng'): alng = pts[0].get('lng')
+
+            if alat and alng:
+                 w_temp, w_code = fetch_open_meteo(alat, alng, start_date)
+                 act["weather_emoji"] = get_weather_emoji(w_code)
+                 # Priorité température Strava, sinon météo
+                 if avg_temp_strava is not None:
+                     act["temperature"] = avg_temp_strava
+                 elif w_temp is not None:
+                     act["temperature"] = w_temp
+                 print(f"   ☀️ Météo MAJ: {act.get('weather_emoji')} {act.get('temperature')}°C")
+
         return
 
     # Nouvelle activité → créer des points “fenêtres 10 échantillons”
@@ -262,6 +330,19 @@ def process_activity(activity_id: int):
         "date": start_date,
         "points": points
     }
+
+    # Ajouter Météo
+    final_temp = avg_temp_strava
+    final_emoji = "❓"
+    
+    if avg_lat and avg_lng:
+        w_temp, w_code = fetch_open_meteo(avg_lat, avg_lng, start_date)
+        final_emoji = get_weather_emoji(w_code)
+        if final_temp is None:
+            final_temp = w_temp
+
+    new_activity["temperature"] = final_temp
+    new_activity["weather_emoji"] = final_emoji
 
     if deriv_cardio is not None:
         new_activity["deriv_cardio"] = deriv_cardio
