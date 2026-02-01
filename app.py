@@ -5159,79 +5159,7 @@ def convert_pace_to_seconds(pace_str):
     return 0
 
 
-@app.route('/api/objectifs/recalculate', methods=['POST'])
-def recalculate_objectifs():
-    """
-    API pour recalculer automatiquement les objectifs avec une approche coach sportif:
-    - k (efficacité): P30 (ambitieux mais atteignable)
-    - drift (dérive cardio): P40 (réaliste physiologiquement)
-    """
-    try:
-        prof = load_profile_from_drive()
-        activities = load_activities_from_drive()
-    except DriveUnavailableError as e:
-        return jsonify({'error': str(e)}), 503
 
-    # Grouper par type
-    by_type = {}
-    for act in activities:
-        cat = act.get('session_category')
-        if cat:
-            if cat not in by_type:
-                by_type[cat] = {'k': [], 'drift': []}
-
-            k = act.get('k_moy')
-            drift = act.get('deriv_cardio')
-            if isinstance(k, (int, float)) and k > 0 and k < 15:  # Filter outliers
-                by_type[cat]['k'].append(k)
-            if isinstance(drift, (int, float)) and 0.8 < drift < 2.0:  # Filter outliers
-                by_type[cat]['drift'].append(drift)
-
-    # Calculer objectifs avec approche physiologique
-    if 'personalized_targets' not in prof:
-        prof['personalized_targets'] = {}
-
-    # Limites plancher par type (approche coach sportif)
-    drift_floors = {
-        'tempo_recup': 1.03,    # Récup facile, on peut viser stable
-        'tempo_rapide': 1.08,   # Effort intense, dérive normale
-        'endurance': 1.05,      # Allure contrôlée
-        'long_run': 1.04        # Distance, mais bien géré = peu de dérive
-    }
-
-    updated = {}
-    for cat, values in by_type.items():
-        if len(values['k']) >= 5 and len(values['drift']) >= 5:
-            # k: P30 (ambitieux mais atteignable)
-            k_target = round(np.percentile(values['k'], 30), 2)
-
-            # drift: P40 (réaliste) + plancher physiologique
-            drift_p40 = round(np.percentile(values['drift'], 40), 2)
-            drift_floor = drift_floors.get(cat, 1.05)
-            drift_target = max(drift_p40, drift_floor)  # Ne jamais descendre sous le plancher
-
-            if cat not in prof['personalized_targets']:
-                prof['personalized_targets'][cat] = {'fc_max': 172.0}
-
-            prof['personalized_targets'][cat]['k_target'] = k_target
-            prof['personalized_targets'][cat]['drift_target'] = drift_target
-            prof['personalized_targets'][cat]['sample_size'] = len(values['k'])
-
-            updated[cat] = {
-                'k_target': k_target,
-                'drift_target': drift_target,
-                'sample_size': len(values['k'])
-            }
-
-    # Sauvegarder
-    save_profile_local(prof)
-    invalidate_profile_cache()  # Invalider cache après modification
-
-    return jsonify({
-        'success': True,
-        'message': f'{len(updated)} objectifs recalculés',
-        'targets': updated
-    })
 # ==================== ROUTES FEEDBACK ====================
 
 @app.route('/feedback/<activity_date>')

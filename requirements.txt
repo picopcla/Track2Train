@@ -13,3 +13,5 @@ python-dotenv
 xgboost
 scipy
 pandas
+google-genai
+google-generativeai
